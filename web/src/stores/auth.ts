@@ -13,8 +13,8 @@ interface User {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref<string | null>(localStorage.getItem('nexus_token'))
-  const refreshToken = ref<string | null>(localStorage.getItem('nexus_refresh_token'))
+  const token = ref<string | null>(localStorage.getItem('mab_token'))
+  const refreshToken = ref<string | null>(localStorage.getItem('mab_refresh_token'))
   const user = ref<User | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -33,8 +33,8 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = data.token
       refreshToken.value = data.refresh_token
       user.value = data.user
-      localStorage.setItem('nexus_token', data.token)
-      localStorage.setItem('nexus_refresh_token', data.refresh_token)
+      localStorage.setItem('mab_token', data.token)
+      localStorage.setItem('mab_refresh_token', data.refresh_token)
       return data
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
@@ -54,8 +54,8 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = null
       refreshToken.value = null
       user.value = null
-      localStorage.removeItem('nexus_token')
-      localStorage.removeItem('nexus_refresh_token')
+      localStorage.removeItem('mab_token')
+      localStorage.removeItem('mab_refresh_token')
     }
   }
 
@@ -63,13 +63,13 @@ export const useAuthStore = defineStore('auth', () => {
     if (!refreshToken.value) throw new Error('No refresh token')
     const response = await authAPI.refresh(refreshToken.value)
     token.value = response.data.token
-    localStorage.setItem('nexus_token', response.data.token)
+      localStorage.setItem('mab_token', response.data.token)
   }
 
   async function fetchCurrentUser() {
     // In a real app, fetch /api/auth/me
     // For now, parse from stored user if needed
-    const stored = localStorage.getItem('nexus_user')
+    const stored = localStorage.getItem('mab_user')
     if (stored) {
       try {
         user.value = JSON.parse(stored)

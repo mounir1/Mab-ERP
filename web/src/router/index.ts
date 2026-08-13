@@ -853,7 +853,7 @@ router.beforeEach((to, _, next) => {
   const auth = useAuthStore()
 
   // Update document title
-  document.title = `${to.meta?.title ?? 'Nexus ERP'} — Nexus ERP`
+  document.title = `${to.meta?.title ?? 'Mab ERP'} — Mab ERP`
 
   if (to.meta?.public) {
     next()

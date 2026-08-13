@@ -14,8 +14,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 
-	"nexus-erp/internal/middleware"
-	"nexus-erp/internal/models"
+	"mab-erp/internal/middleware"
+	"mab-erp/internal/models"
 )
 
 // Ensure time and models are used (referenced elsewhere in file)
@@ -245,7 +245,7 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 func jwtKey() []byte {
 	s := os.Getenv("JWT_SECRET")
 	if s == "" {
-		s = "nexus-erp-default-secret-change-in-production"
+		s = "mab-erp-default-secret-change-in-production"
 	}
 	return []byte(s)
 }

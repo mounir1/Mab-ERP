@@ -1,5 +1,5 @@
 -- =============================================================================
--- 0001_init_schema.sql - Nexus ERP Initial Schema
+-- 0001_init_schema.sql - Mab ERP Initial Schema
 -- Version: PostgreSQL 14 compatible
 -- =============================================================================
 

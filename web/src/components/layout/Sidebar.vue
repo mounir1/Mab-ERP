@@ -321,10 +321,10 @@ function isGroupExpanded(item: NavItem): boolean {
     <!-- Logo / Brand -->
     <div class="flex items-center gap-3 px-4 py-4 border-b border-slate-800 min-h-[60px]">
       <div class="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
-        N
+        M
       </div>
       <transition name="fade-text">
-        <span v-if="!collapsed" class="font-bold text-white text-sm truncate">Nexus ERP</span>
+        <span v-if="!collapsed" class="font-bold text-white text-sm truncate">Mab ERP</span>
       </transition>
     </div>
 

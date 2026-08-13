@@ -1,5 +1,5 @@
 -- =============================================================================
--- Nexus ERP — Full PostgreSQL Schema
+-- Mab ERP — Full PostgreSQL Schema
 -- Version: 1.0.0  |  Algerian SCF/IRG/CNAS Compliant
 -- =============================================================================
 
@@ -1415,7 +1415,7 @@ CREATE INDEX idx_notifications_user ON notifications(user_id, is_read);
 -- =============================================================================
 
 INSERT INTO tenants (id, code, name, plan) VALUES
-    ('00000000-0000-0000-0000-000000000001', 'NEXUS', 'Nexus Default Tenant', 'enterprise')
+    ('00000000-0000-0000-0000-000000000001', 'MAB', 'Mab Default Tenant', 'enterprise')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO companies (id, tenant_id, code, name, legal_name, currency) VALUES
@@ -1431,7 +1431,7 @@ INSERT INTO users (id, tenant_id, company_id, username, email, password_hash, fu
      '00000000-0000-0000-0000-000000000001',
      '00000000-0000-0000-0000-000000000002',
      'admin',
-     'admin@nexus-erp.local',
+     'admin@mab-erp.local',
      '$2b$12$7ohOxG.AkzuDrYs.YjkAZeT782oQJPqF8767Ay3/laNUzBUDbeFhC',
      'System Administrator',
      'super_admin')

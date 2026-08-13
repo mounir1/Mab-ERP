@@ -66,10 +66,10 @@ function handleKeydown(e: KeyboardEvent) {
             <!-- Logo -->
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
               style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-              <span class="text-white font-black text-2xl tracking-tight">N</span>
+              <span class="text-white font-black text-2xl tracking-tight">M</span>
             </div>
             <div>
-              <h1 class="text-white font-bold text-xl tracking-tight">Nexus ERP</h1>
+              <h1 class="text-white font-bold text-xl tracking-tight">Mab ERP</h1>
               <p class="text-indigo-200 text-xs font-medium mt-0.5">Enterprise Resource Planning — Algeria</p>
             </div>
           </div>
@@ -224,7 +224,7 @@ function handleKeydown(e: KeyboardEvent) {
       <div class="text-center mt-5 flex items-center justify-center gap-3">
         <div class="h-px flex-1" style="background: rgba(255,255,255,0.08);"></div>
         <p class="text-xs flex-shrink-0" style="color: #475569;">
-          Nexus ERP v1.1.0 &copy; {{ new Date().getFullYear() }}
+          Mab ERP v1.1.0 &copy; {{ new Date().getFullYear() }}
         </p>
         <div class="h-px flex-1" style="background: rgba(255,255,255,0.08);"></div>
       </div>

@@ -1,5 +1,5 @@
 -- =============================================================================
--- Nexus ERP — Quality Management Module Migration
+-- Mab ERP — Quality Management Module Migration
 -- Version: 0015 | Full Quality schema (idempotent)
 -- =============================================================================
 

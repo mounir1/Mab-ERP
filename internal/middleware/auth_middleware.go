@@ -86,7 +86,7 @@ func AuditLog() gin.HandlerFunc {
 func jwtSecret() []byte {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		secret = "nexus-erp-default-secret-change-in-production"
+		secret = "mab-erp-default-secret-change-in-production"
 	}
 	return []byte(secret)
 }

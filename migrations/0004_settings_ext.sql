@@ -1,5 +1,5 @@
 -- =============================================================================
--- Nexus ERP — Settings Extensions Migration
+-- Mab ERP — Settings Extensions Migration
 -- Version: 0004 | Extends base schema with roles, taxes, workflow, audit tables
 -- =============================================================================
 

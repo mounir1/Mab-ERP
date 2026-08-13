@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/shopspring/decimal"
 
-	"nexus-erp/internal/middleware"
+	"mab-erp/internal/middleware"
 )
 
 // Ensure time is used

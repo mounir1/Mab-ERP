@@ -1,5 +1,5 @@
 -- =============================================================================
--- Nexus ERP — Fix Missing Tables Migration
+-- Mab ERP — Fix Missing Tables Migration
 -- Version: 0016 | Fleet + Maintenance + Quality tables (idempotent)
 -- =============================================================================
 

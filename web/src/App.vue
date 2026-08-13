@@ -36,7 +36,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div id="nexus-app" class="font-sans antialiased">
+  <div id="mab-app" class="font-sans antialiased">
     <!-- Auth pages (login, forgot password) -->
     <template v-if="isAuthPage">
       <router-view />

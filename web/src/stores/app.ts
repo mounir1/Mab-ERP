@@ -18,7 +18,7 @@ export const useAppStore = defineStore('app', () => {
 
   // ── Theme ──────────────────────────────────────────────────────────────────
   // Initialise from localStorage or system preference
-  const savedTheme = localStorage.getItem('nexus-theme')
+  const savedTheme = localStorage.getItem('mab-theme')
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
   const darkMode = ref<boolean>(
     savedTheme !== null ? savedTheme === 'dark' : prefersDark
@@ -30,7 +30,7 @@ export const useAppStore = defineStore('app', () => {
     } else {
       document.documentElement.classList.remove('dark')
     }
-    localStorage.setItem('nexus-theme', dark ? 'dark' : 'light')
+    localStorage.setItem('mab-theme', dark ? 'dark' : 'light')
   }
 
   // Apply on init

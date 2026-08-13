@@ -47,7 +47,7 @@ onMounted(() => { loadApprovals() })
     <!-- Left: Page title -->
     <div class="flex items-center gap-3">
       <h1 class="text-sm font-semibold truncate" :class="app.darkMode ? 'text-slate-100' : 'text-slate-700'">
-        {{ $route.meta?.title ?? 'Nexus ERP' }}
+        {{ $route.meta?.title ?? 'Mab ERP' }}
       </h1>
     </div>
 

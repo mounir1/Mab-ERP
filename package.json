@@ -1,7 +1,7 @@
 {
-  "name": "nexus-erp-frontend",
-  "version": "1.0.0",
-  "description": "Nexus ERP — Vue 3 + TypeScript + Tailwind CSS frontend",
+  "name": "mab-erp-frontend",
+  "version": "1.1.0",
+  "description": "Mab ERP — Vue 3 + TypeScript + Tailwind CSS frontend",
   "private": true,
   "type": "module",
   "scripts": {

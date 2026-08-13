@@ -11,8 +11,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/shopspring/decimal"
 
-	"nexus-erp/internal/middleware"
-	"nexus-erp/internal/models"
+	"mab-erp/internal/middleware"
+	"mab-erp/internal/models"
 )
 
 // ─── Sales Handler ────────────────────────────────────────────────────────────

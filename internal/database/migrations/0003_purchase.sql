@@ -1,5 +1,5 @@
 -- =============================================================================
--- Nexus ERP — Purchase Schema Patch  v1.7.0
+-- Mab ERP — Purchase Schema Patch  v1.7.0
 -- Migration: 0003_purchase.sql
 -- Safe to run on top of 0001_init_schema.sql — all statements are idempotent.
 -- Root cause fixed: old migration referenced customer_id which does NOT exist

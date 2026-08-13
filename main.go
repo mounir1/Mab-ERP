@@ -11,9 +11,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	"nexus-erp/internal/database"
-	"nexus-erp/internal/handler"
-	"nexus-erp/internal/middleware"
+	"mab-erp/internal/database"
+	"mab-erp/internal/handler"
+	"mab-erp/internal/middleware"
 )
 
 //go:embed web/dist
@@ -894,7 +894,7 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("🚀 Nexus ERP server running on http://localhost:%s", port)
+	log.Printf("🚀 Mab ERP server running on http://localhost:%s", port)
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

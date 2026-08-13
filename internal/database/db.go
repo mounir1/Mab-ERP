@@ -51,7 +51,7 @@ func defaultDSN() string {
 	port := getEnv("DB_PORT", "5432")
 	user := getEnv("DB_USER", "postgres")
 	pass := getEnv("DB_PASSWORD", "postgres")
-	name := getEnv("DB_NAME", "nexus_erp")
+	name := getEnv("DB_NAME", "mab_erp")
 	ssl := getEnv("DB_SSLMODE", "disable")
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, pass, host, port, name, ssl)
 }

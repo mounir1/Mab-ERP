@@ -1,4 +1,4 @@
-module nexus-erp
+module mab-erp
 
 go 1.21
 

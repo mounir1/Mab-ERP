@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"nexus-erp/internal/middleware"
-	"nexus-erp/internal/models"
+	"mab-erp/internal/middleware"
+	"mab-erp/internal/models"
 )
 
 // ─── Purchase Handler ─────────────────────────────────────────────────────────

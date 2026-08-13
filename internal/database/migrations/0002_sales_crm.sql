@@ -1,5 +1,5 @@
 -- =============================================================================
--- Nexus ERP — Sales & CRM Schema Patch  v1.7.0
+-- Mab ERP — Sales & CRM Schema Patch  v1.7.0
 -- Migration: 0002_sales_crm.sql
 -- Safe to run on top of 0001_init_schema.sql — all statements are idempotent.
 -- =============================================================================
