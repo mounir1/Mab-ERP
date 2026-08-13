@@ -136,7 +136,7 @@ func RunMigrations(pool *pgxpool.Pool) error {
 			return fmt.Errorf("failed to execute migration %s: %w", fname, err)
 		}
 
-		if _, err := tx.Exec(ctx, `INSERT INTO schema_migrations (version) VALUES ($1)`, version); err != nil {
+		if _, err := tx.Exec(ctx, `INSERT INTO schema_migrations (version) VALUES ($1) ON CONFLICT DO NOTHING`, version); err != nil {
 			_ = tx.Rollback(ctx)
 			return fmt.Errorf("failed to record migration %s: %w", fname, err)
 		}
