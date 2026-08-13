@@ -1000,9 +1000,11 @@ CREATE TABLE stock_levels (
     qty_reserved    NUMERIC(18,4) NOT NULL DEFAULT 0,
     qty_available   NUMERIC(18,4) GENERATED ALWAYS AS (qty_on_hand - qty_reserved) STORED,
     cmup_cost       NUMERIC(18,4) NOT NULL DEFAULT 0,
-    updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    UNIQUE(item_id, warehouse_id, COALESCE(location_id, '00000000-0000-0000-0000-000000000000'::UUID))
+    updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX uq_stock_levels_item_warehouse
+    ON stock_levels(item_id, warehouse_id, COALESCE(location_id, '00000000-0000-0000-0000-000000000000'::UUID));
 
 CREATE INDEX idx_stock_levels_item      ON stock_levels(item_id);
 CREATE INDEX idx_stock_levels_warehouse ON stock_levels(warehouse_id);
