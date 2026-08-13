@@ -56,6 +56,10 @@ CREATE SEQUENCE IF NOT EXISTS tax_payment_seq     START 2000 INCREMENT 1;
 
 -- ─── CORE TABLES ─────────────────────────────────────────────────────────────
 
+-- Replace legacy tax tables from migration 0001 with the authoritative schema below
+DROP TABLE IF EXISTS tax_declarations CASCADE;
+DROP TABLE IF EXISTS vat_entries CASCADE;
+
 -- G50 / Tax Declarations master table
 CREATE TABLE IF NOT EXISTS tax_declarations (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),

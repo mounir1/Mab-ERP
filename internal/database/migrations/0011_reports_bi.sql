@@ -103,23 +103,23 @@ DO $$ BEGIN
 END $$;
 
 -- ─────────────────────────────────────────────────────────────
--- PART 6 — Ensure invoice_lines has all needed columns
+-- PART 6 — Ensure sales_invoice_lines has all needed columns
 -- ─────────────────────────────────────────────────────────────
 DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_name='invoice_lines' AND column_name='discount_pct'
+    WHERE table_name='sales_invoice_lines' AND column_name='discount_pct'
   ) THEN
-    ALTER TABLE invoice_lines ADD COLUMN discount_pct NUMERIC(5,2) NOT NULL DEFAULT 0;
+    ALTER TABLE sales_invoice_lines ADD COLUMN discount_pct NUMERIC(5,2) NOT NULL DEFAULT 0;
   END IF;
 END $$;
 
 DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_name='invoice_lines' AND column_name='tax_amount'
+    WHERE table_name='sales_invoice_lines' AND column_name='tax_amount'
   ) THEN
-    ALTER TABLE invoice_lines ADD COLUMN tax_amount NUMERIC(18,2) NOT NULL DEFAULT 0;
+    ALTER TABLE sales_invoice_lines ADD COLUMN tax_amount NUMERIC(18,2) NOT NULL DEFAULT 0;
   END IF;
 END $$;
 

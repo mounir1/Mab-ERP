@@ -1000,9 +1000,11 @@ CREATE TABLE stock_levels (
     qty_reserved    NUMERIC(18,4) NOT NULL DEFAULT 0,
     qty_available   NUMERIC(18,4) GENERATED ALWAYS AS (qty_on_hand - qty_reserved) STORED,
     cmup_cost       NUMERIC(18,4) NOT NULL DEFAULT 0,
-    updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    UNIQUE(item_id, warehouse_id, COALESCE(location_id, '00000000-0000-0000-0000-000000000000'::UUID))
+    updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX uq_stock_levels_item_warehouse
+    ON stock_levels(item_id, warehouse_id, COALESCE(location_id, '00000000-0000-0000-0000-000000000000'::UUID));
 
 CREATE INDEX idx_stock_levels_item      ON stock_levels(item_id);
 CREATE INDEX idx_stock_levels_warehouse ON stock_levels(warehouse_id);
@@ -1407,17 +1409,6 @@ CREATE TABLE notifications (
 );
 
 CREATE INDEX idx_notifications_user ON notifications(user_id, is_read);
-
--- =============================================================================
--- MIGRATION TRACKING
--- =============================================================================
-
-CREATE TABLE IF NOT EXISTS schema_migrations (
-    version     VARCHAR(50) PRIMARY KEY,
-    applied_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-INSERT INTO schema_migrations (version) VALUES ('0001_init_schema') ON CONFLICT DO NOTHING;
 
 -- =============================================================================
 -- DEFAULT DATA — Super Tenant + Admin User

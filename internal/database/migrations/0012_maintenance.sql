@@ -305,6 +305,13 @@ CREATE INDEX IF NOT EXISTS idx_mpu_company_id   ON maintenance_parts_used(compan
 
 -- ─── 10. AUTO-UPDATE updated_at TRIGGERS ─────────────────────────────────────
 
+CREATE OR REPLACE FUNCTION update_updated_at_column() RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_trigger WHERE tgname = 'trg_equipment_updated_at'
