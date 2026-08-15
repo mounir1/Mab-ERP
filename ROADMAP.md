@@ -14,7 +14,7 @@ Current baseline: backend + DB + Vite dev server running locally (migrations fix
 
 - [ ] Snapshot current working state: commit migration fixes (`0001`, `0009`, `0011`, `0012`, `db.go ON CONFLICT`)
 - [ ] Fix `.gitignore`: add `.dev/`, `cmd/`, `web/dist/`, `web/node_modules/`
-- [ ] Remove junk/risky committed files:
+- [x] Remove junk/risky committed files:
       `backup_nexuserp_*.sql` (DB dump with data), `web/src/src`, `web/web`
 - [ ] Reconcile duplicate migration sets → single source of truth
       (root `migrations/` currently diverges from `internal/database/migrations/`; embedded copy governs)
