@@ -246,6 +246,7 @@ func main() {
 			hr.PUT("/payroll/runs/:id/approve", h.HR.ApprovePayrollRun)
 			hr.PUT("/payroll/runs/:id/pay", h.HR.PayPayrollRun)
 			hr.GET("/payroll/runs/:id/payslips", h.HR.GetPayslips)
+			hr.GET("/payroll/payslips", h.HR.GetPayslips)
 			hr.GET("/payroll/runs/:id/g29", h.HR.ExportG29)
 
 			// Recruitment — Job Postings
