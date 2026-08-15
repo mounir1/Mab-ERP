@@ -5,7 +5,7 @@ import {
   ChevronUp, ChevronDown, Download, RefreshCw, Phone, Mail, Building2,
   Briefcase, Calendar, CreditCard, MapPin, ChevronLeft, ChevronRight,
   ArrowUpDown, Save, AlertCircle, User
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { hrAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

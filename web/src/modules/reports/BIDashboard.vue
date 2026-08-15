@@ -5,7 +5,7 @@ import {
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, Package,
   Users, AlertCircle, BarChart3, RefreshCw, Calendar, ArrowUpRight,
   ArrowDownRight, Wallet, CreditCard, Clock, Target
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { reportsAPI } from '@/api/client'
 
 const app = useAppStore()

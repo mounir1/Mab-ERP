@@ -252,7 +252,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   ChevronDown, Loader2, RefreshCw, BarChart3, PieChart, Users, DollarSign,
   FileText, FolderKanban, CheckCircle, TrendingUp, Clock
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { projectsAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

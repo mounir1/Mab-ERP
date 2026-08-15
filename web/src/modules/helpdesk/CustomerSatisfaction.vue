@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { helpdeskAPI } from '@/api/client'
-import { Star, Plus, RefreshCw, X, ThumbsUp, ThumbsDown, Smile, Meh, Frown, BarChart3 } from 'lucide-vue-next'
+import { Star, Plus, RefreshCw, X, ThumbsUp, ThumbsDown, Smile, Meh, Frown, BarChart3 } from '@lucide/vue'
 
 const app = useAppStore()
 const loading = ref(true)

@@ -4,7 +4,7 @@ import {
   Search, Plus, RefreshCw, Edit2, Trash2, ChevronDown, ChevronUp,
   Factory, X, Check, AlertCircle, DollarSign, Clock, Activity,
   ToggleLeft, ToggleRight
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { manufacturingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

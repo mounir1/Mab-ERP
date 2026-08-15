@@ -284,7 +284,7 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   ArrowLeft, Loader2, UserX, Pencil, User, Phone, Briefcase, CreditCard,
   CalendarDays, Plane, FileText
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { hrAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

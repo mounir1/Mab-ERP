@@ -6,7 +6,7 @@ import {
   Users, Plus, Search, Edit2, X, Save, RefreshCw, Shield,
   UserCheck, UserX, Key, Trash2, Mail, Phone, Lock, Eye, EyeOff,
   ChevronDown, CheckCircle, XCircle
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const loading = ref(false)

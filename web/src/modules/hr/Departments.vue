@@ -324,7 +324,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   Building2, Users, CheckCircle, UserCheck, Search, Plus, Pencil, Trash2,
   Loader2, X, ChevronDown, ChevronRight, ArrowUpDown, AlertTriangle
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { hrAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

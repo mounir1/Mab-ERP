@@ -5,7 +5,7 @@ import { settingsAPI } from '@/api/client'
 import {
   CalendarDays, Plus, RefreshCw, X, Save, Lock, Unlock,
   CheckCircle, AlertCircle, Clock, ChevronRight
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const loading = ref(false)

@@ -215,7 +215,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   Plus, X, Loader2, FileX, Search, RefreshCw,
   Pencil, ArrowDownToLine, FileText, CheckCircle2, XCircle, Clock
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { treasuryAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

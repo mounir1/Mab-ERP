@@ -270,7 +270,7 @@ import {
   Plus, X, Loader2, FileX, Search, RefreshCw,
   ArrowDownToLine, CheckCircle2, Clock, AlertCircle,
   Pencil, Trash2
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { treasuryAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

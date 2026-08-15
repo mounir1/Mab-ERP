@@ -402,7 +402,7 @@ import {
   Banknote, Plus, Calendar, Filter, Search, Receipt, CheckCircle2,
   Clock, AlertTriangle, CreditCard, Edit3, Trash2, ChevronLeft,
   ChevronRight, X, Save
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { taxAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

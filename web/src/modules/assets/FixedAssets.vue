@@ -5,7 +5,7 @@ import { assetsAPI } from '@/api/client'
 import {
   Package, Plus, Search, RefreshCw, Edit, Trash2, Eye,
   XCircle, CheckCircle, Archive, Wrench, ChevronDown
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 

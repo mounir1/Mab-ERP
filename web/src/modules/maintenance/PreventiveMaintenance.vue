@@ -4,7 +4,7 @@ import {
   Shield, Plus, Search, Edit2, Trash2, X, RefreshCw,
   CheckCircle, AlertTriangle, Clock, Calendar, Wrench,
   ChevronDown, ToggleLeft, ToggleRight, Settings
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { maintenanceAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

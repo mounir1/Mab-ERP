@@ -299,7 +299,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   Building2, Wallet, Landmark, Plus, X, Loader2,
   Pencil, Activity, RefreshCw
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { treasuryAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 import { useRouter } from 'vue-router'

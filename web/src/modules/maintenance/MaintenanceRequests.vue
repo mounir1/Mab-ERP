@@ -5,7 +5,7 @@ import { maintenanceAPI } from '@/api/client'
 import {
   Search, Plus, Edit2, Trash2, Eye, X, RefreshCw,
   ClipboardList, AlertTriangle, CheckCircle, Clock, Ban
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 

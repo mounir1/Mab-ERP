@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { helpdeskAPI } from '@/api/client'
-import { Tag, Plus, Edit, Trash2, RefreshCw, X, ChevronRight, FolderOpen } from 'lucide-vue-next'
+import { Tag, Plus, Edit, Trash2, RefreshCw, X, ChevronRight, FolderOpen } from '@lucide/vue'
 
 const app = useAppStore()
 const loading = ref(true)

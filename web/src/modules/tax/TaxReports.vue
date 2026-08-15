@@ -324,7 +324,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   FileBarChart2, Download, TrendingUp, BarChart3, Building2,
   PieChart, CalendarDays, TableProperties
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { taxAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

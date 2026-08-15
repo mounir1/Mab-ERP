@@ -5,7 +5,7 @@ import { assetsAPI } from '@/api/client'
 import {
   ArrowLeftRight, Plus, RefreshCw, XCircle,
   CheckCircle, Clock, Truck, Trash2, Eye
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const transfers = ref<any[]>([])

@@ -398,7 +398,7 @@ import {
   Plus, ClipboardList, FileEdit, CheckCircle, Calendar, Search, Loader2,
   X, Save, Eye, Trash2, ChevronLeft, ChevronRight, ChevronsUpDown, ChevronUp, ChevronDown,
   XCircle
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { inventoryAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

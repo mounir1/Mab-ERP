@@ -4,7 +4,7 @@ import {
   Search, Plus, RefreshCw, Edit2, Trash2, ChevronDown, ChevronUp,
   Layers3, Package, Wrench, X, Check, AlertCircle, Info,
   ChevronsUpDown, GripVertical, Copy
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { manufacturingAPI, inventoryAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

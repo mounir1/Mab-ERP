@@ -4,7 +4,7 @@ import {
   Landmark, Plus, RefreshCw, Loader2, CheckCircle, X,
   Calendar, AlertCircle, TrendingUp, TrendingDown, Scale,
   CheckSquare, Square, DollarSign, Clock, Search, ArrowRight
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { accountingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

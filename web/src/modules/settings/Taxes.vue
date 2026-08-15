@@ -5,7 +5,7 @@ import { settingsAPI } from '@/api/client'
 import {
   Percent, Plus, Edit2, X, Save, RefreshCw, Trash2,
   CheckCircle, XCircle, Tag, AlertCircle
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const loading = ref(false)

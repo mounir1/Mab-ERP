@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   Calendar, ChevronLeft, ChevronRight, RefreshCw,
   Wrench, Shield, Search, AlertTriangle, Clock, CheckCircle, X
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { maintenanceAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

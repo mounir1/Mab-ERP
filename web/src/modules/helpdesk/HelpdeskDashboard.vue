@@ -6,7 +6,7 @@ import {
   Headphones, Ticket, Clock, CheckCircle2, AlertTriangle,
   TrendingUp, Users, Star, BarChart3, RefreshCw,
   ArrowUpRight, ArrowDownRight, Timer, XCircle
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const loading = ref(true)

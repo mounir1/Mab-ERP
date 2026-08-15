@@ -4,7 +4,7 @@ import {
   History, Search, RefreshCw, Eye, X, Filter,
   Wrench, CheckCircle, DollarSign, Clock,
   ChevronLeft, ChevronRight, User, Calendar, FileText
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { maintenanceAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

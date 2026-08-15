@@ -7,7 +7,7 @@ import {
   TrendingUp, TrendingDown, CheckCircle, XCircle,
   Clock, RefreshCw, BarChart3, Activity,
   AlertCircle, Target, Percent, ThumbsUp
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const dk = (d: string, l: string) => app.darkMode ? d : l

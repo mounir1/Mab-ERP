@@ -331,7 +331,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   Plus, Search, Loader2, FolderKanban, Pencil, Trash2, X, ChevronDown,
   CalendarDays, DollarSign, AlertTriangle, CheckCircle, Clock, PauseCircle, XCircle
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { projectsAPI, hrAPI, salesAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

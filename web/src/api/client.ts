@@ -68,7 +68,8 @@ api.interceptors.response.use(
 export const authAPI = {
   login: (username: string, password: string, companyId?: string) =>
     api.post('/auth/login', { username, password, company_id: companyId }),
-  logout: () => api.post('/auth/logout'),
+  logout: (refreshToken?: string) =>
+    api.post('/auth/logout', refreshToken ? { refresh_token: refreshToken } : {}),
   refresh: (refreshToken: string) => api.post('/auth/refresh', { refresh_token: refreshToken }),
   forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
 }

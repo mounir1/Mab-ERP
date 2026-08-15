@@ -4,7 +4,7 @@ import {
   Network, Plus, Search, RefreshCw, Loader2, CheckCircle, X,
   Pencil, Building2, FolderOpen, Tag, ArrowUpDown, Filter,
   GitBranch, Users, Briefcase, Activity, TrendingUp
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { accountingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

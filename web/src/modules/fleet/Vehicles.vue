@@ -294,7 +294,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Truck, Plus, Search, Eye, Pencil, Trash2, X, Loader2, AlertTriangle, Gauge, ShieldCheck, Wrench, CircleOff } from 'lucide-vue-next'
+import { Truck, Plus, Search, Eye, Pencil, Trash2, X, Loader2, AlertTriangle, Gauge, ShieldCheck, Wrench, CircleOff } from '@lucide/vue'
 import { fleetAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

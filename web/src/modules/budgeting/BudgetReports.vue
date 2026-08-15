@@ -249,7 +249,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { BarChart3, RefreshCw } from 'lucide-vue-next'
+import { BarChart3, RefreshCw } from '@lucide/vue'
 import { budgetingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

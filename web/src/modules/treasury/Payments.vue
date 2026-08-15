@@ -254,7 +254,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   Plus, X, Loader2, FileX, Search, RefreshCw, Banknote,
   ArrowUpRight, ArrowDownLeft, AlertCircle, Pencil, CheckCircle2
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { treasuryAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

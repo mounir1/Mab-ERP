@@ -431,7 +431,7 @@ import {
   FileCheck, Plus, Calendar, ArrowUpCircle, ArrowDownCircle,
   Calculator, X, TrendingUp, ShoppingCart, ChevronDown,
   Edit3, Send, CheckCircle2, Save, Clock, AlertCircle
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { taxAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

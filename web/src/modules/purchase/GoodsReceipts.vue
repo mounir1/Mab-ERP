@@ -6,7 +6,7 @@ import {
   Plus, X, Save, Search, RefreshCw, Eye, CheckCircle,
   ChevronDown, ChevronUp, Trash2, Package, Truck,
   Calendar, FileText, Building2, AlertTriangle, ClipboardList
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

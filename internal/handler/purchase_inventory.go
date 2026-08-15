@@ -2,7 +2,9 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -166,7 +168,7 @@ func (h *PurchaseHandler) GetOrder(c *gin.Context) {
 
 	rows, _ := h.db.Query(ctx, `
 		SELECT id, item_id, item_code, item_name, quantity, received_qty, unit_price, tva_rate, sub_total, total_amount
-		FROM purchase_order_lines WHERE purchase_order_id = $1
+		FROM purchase_order_lines WHERE po_id = $1
 	`, id)
 	if rows != nil {
 		defer rows.Close()
@@ -210,7 +212,7 @@ func (h *PurchaseHandler) CreateOrder(c *gin.Context) {
 		line.ID = uuid.NewString()
 		_, _ = tx.Exec(ctx, `
 			INSERT INTO purchase_order_lines 
-			(id, purchase_order_id, item_id, item_code, item_name, quantity, unit_price, tva_rate, sub_total, total_amount)
+			(id, po_id, item_id, item_code, item_name, quantity, unit_price, tva_rate, sub_total, total_amount)
 			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
 		`, line.ID, o.ID, line.ItemID, line.ItemCode, line.ItemName,
 			line.Quantity, line.UnitPrice, line.TVARate, line.SubTotal, line.TotalAmount)
@@ -238,8 +240,11 @@ func (h *PurchaseHandler) ListGoodsReceipts(c *gin.Context) {
 	companyID := middleware.GetCompanyID(c)
 	ctx := context.Background()
 	rows, err := h.db.Query(ctx,
-		`SELECT id, number, purchase_order_id, supplier_name, date, status, created_at
-		 FROM goods_receipt_notes WHERE company_id = $1 ORDER BY date DESC`, companyID)
+		`SELECT gr.id, gr.number, gr.po_id, COALESCE(po.number, '') AS po_number,
+		        COALESCE(gr.supplier_name, ''), gr.date, gr.status, COALESCE(gr.total_amount, 0), gr.created_at
+		 FROM goods_receipts gr
+		 LEFT JOIN purchase_orders po ON po.id = gr.po_id
+		 WHERE gr.company_id = $1 ORDER BY gr.date DESC, gr.created_at DESC`, companyID)
 	if err != nil {
 		c.JSON(http.StatusOK, []interface{}{})
 		return
@@ -247,28 +252,338 @@ func (h *PurchaseHandler) ListGoodsReceipts(c *gin.Context) {
 	defer rows.Close()
 	var grns []map[string]interface{}
 	for rows.Next() {
-		var id, number, poID, suppName, status string
+		var id, number, poID, poNumber, suppName, status string
+		var total float64
 		var date, createdAt interface{}
-		_ = rows.Scan(&id, &number, &poID, &suppName, &date, &status, &createdAt)
+		_ = rows.Scan(&id, &number, &poID, &poNumber, &suppName, &date, &status, &total, &createdAt)
 		grns = append(grns, map[string]interface{}{
-			"id": id, "number": number, "purchase_order_id": poID,
+			"id": id, "number": number, "po_id": poID, "po_number": poNumber,
 			"supplier_name": suppName, "date": date, "status": status,
+			"total_amount": total,
 		})
+	}
+	if grns == nil {
+		grns = []map[string]interface{}{}
 	}
 	c.JSON(http.StatusOK, grns)
 }
 
-func (h *PurchaseHandler) CreateGoodsReceipt(c *gin.Context) {
-	var req map[string]interface{}
-	c.ShouldBindJSON(&req)
-	req["id"] = uuid.NewString()
+func (h *PurchaseHandler) GetGoodsReceipt(c *gin.Context) {
+	id := c.Param("id")
 	companyID := middleware.GetCompanyID(c)
-	req["company_id"] = companyID
-	req["number"] = generateNumber("GRN", companyID, h.db)
-	req["status"] = "received"
+	ctx := context.Background()
 
-	// TODO: Update PO received quantities and create stock movements
-	c.JSON(http.StatusCreated, req)
+	var gr struct {
+		ID           string
+		Number       string
+		POID         string
+		PONumber     string
+		SupplierID   string
+		SupplierName string
+		Date         interface{}
+		WarehouseID  string
+		Status       string
+		Total        float64
+		Notes        string
+		CreatedAt    interface{}
+		Lines        []gin.H
+	}
+	err := h.db.QueryRow(ctx, `
+		SELECT gr.id, gr.number, gr.po_id, COALESCE(po.number, ''),
+		       COALESCE(gr.supplier_id::text, ''), COALESCE(gr.supplier_name, ''),
+		       gr.date, COALESCE(gr.warehouse_id::text, ''), gr.status,
+		       COALESCE(gr.total_amount, 0), COALESCE(gr.notes, ''), gr.created_at
+		FROM goods_receipts gr
+		LEFT JOIN purchase_orders po ON po.id = gr.po_id
+		WHERE gr.id = $1 AND gr.company_id = $2`, id, companyID,
+	).Scan(&gr.ID, &gr.Number, &gr.POID, &gr.PONumber, &gr.SupplierID,
+		&gr.SupplierName, &gr.Date, &gr.WarehouseID, &gr.Status, &gr.Total, &gr.Notes, &gr.CreatedAt)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Goods receipt not found"})
+		return
+	}
+
+	rows, err := h.db.Query(ctx, `
+		SELECT id, po_line_id, COALESCE(item_id::text, ''), description,
+		       expected_qty, received_qty, unit_cost
+		FROM goods_receipt_lines WHERE grn_id = $1`, gr.ID)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var lineID, poLineID, itemID, desc string
+			var expected, received, unitCost float64
+			_ = rows.Scan(&lineID, &poLineID, &itemID, &desc, &expected, &received, &unitCost)
+			gr.Lines = append(gr.Lines, gin.H{
+				"id": lineID, "po_line_id": poLineID, "item_id": itemID,
+				"description": desc, "expected_qty": expected,
+				"received_qty": received, "unit_cost": unitCost,
+			})
+		}
+	}
+	if gr.Lines == nil {
+		gr.Lines = []gin.H{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"id": gr.ID, "number": gr.Number, "po_id": gr.POID, "po_number": gr.PONumber,
+		"supplier_id": gr.SupplierID, "supplier_name": gr.SupplierName,
+		"date": gr.Date, "warehouse_id": gr.WarehouseID, "status": gr.Status,
+		"total_amount": gr.Total, "notes": gr.Notes, "created_at": gr.CreatedAt,
+		"lines": gr.Lines,
+	})
+}
+
+func (h *PurchaseHandler) CreateGoodsReceipt(c *gin.Context) {
+	companyID := middleware.GetCompanyID(c)
+	userID := middleware.GetUserID(c)
+	ctx := context.Background()
+
+	var body struct {
+		POID        string `json:"po_id" binding:"required"`
+		Date        string `json:"date"`
+		WarehouseID string `json:"warehouse_id"`
+		Notes       string `json:"notes"`
+		Lines       []struct {
+			POLineID   string  `json:"po_line_id"`
+			ItemID     string  `json:"item_id"`
+			Description string  `json:"description"`
+			ExpectedQty float64 `json:"expected_qty"`
+			ReceivedQty float64 `json:"received_qty"`
+			UnitCost    float64 `json:"unit_cost"`
+		} `json:"lines"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if body.WarehouseID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "warehouse_id is required"})
+		return
+	}
+	if len(body.Lines) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "At least one line is required"})
+		return
+	}
+
+	// Verify the PO belongs to this company and load supplier info
+	var supplierID, supplierName, poStatus string
+	err := h.db.QueryRow(ctx, `
+		SELECT supplier_id, COALESCE(supplier_name, ''), status::text
+		FROM purchase_orders WHERE id = $1 AND company_id = $2`,
+		body.POID, companyID,
+	).Scan(&supplierID, &supplierName, &poStatus)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Purchase order not found"})
+		return
+	}
+
+	grnID := uuid.NewString()
+	number := generateReceiptNumber(ctx, h.db, companyID)
+
+	date := body.Date
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+
+	var total float64
+	for _, l := range body.Lines {
+		total += l.ReceivedQty * l.UnitCost
+	}
+
+	tx, err := h.db.Begin(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `
+		INSERT INTO goods_receipts
+			(id, company_id, number, po_id, supplier_id, supplier_name, date,
+			 warehouse_id, status, total_amount, notes, created_by)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'draft',$9,$10,$11)`,
+		grnID, companyID, number, body.POID, supplierID, supplierName, date,
+		body.WarehouseID, total, body.Notes, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	for _, l := range body.Lines {
+		_, err = tx.Exec(ctx, `
+			INSERT INTO goods_receipt_lines
+				(id, grn_id, po_line_id, item_id, description, expected_qty, received_qty, unit_cost)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+			uuid.NewString(), grnID, l.POLineID, l.ItemID, l.Description,
+			l.ExpectedQty, l.ReceivedQty, l.UnitCost)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"id": grnID, "number": number, "po_id": body.POID,
+		"supplier_name": supplierName, "date": date, "status": "draft",
+		"total_amount": total, "warehouse_id": body.WarehouseID,
+	})
+}
+
+// ValidateGoodsReceipt marks a draft GRN as received: it posts stock movements,
+// updates PO line received quantities, and recalculates the PO status.
+func (h *PurchaseHandler) ValidateGoodsReceipt(c *gin.Context) {
+	id := c.Param("id")
+	companyID := middleware.GetCompanyID(c)
+	userID := middleware.GetUserID(c)
+	ctx := context.Background()
+
+	var grnID, poID, warehouseID string
+	err := h.db.QueryRow(ctx, `
+		SELECT id, po_id, COALESCE(warehouse_id::text, '')
+		FROM goods_receipts WHERE id = $1 AND company_id = $2 AND status = 'draft'`,
+		id, companyID,
+	).Scan(&grnID, &poID, &warehouseID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Draft goods receipt not found"})
+		return
+	}
+	if warehouseID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Goods receipt has no warehouse; cannot post stock"})
+		return
+	}
+
+	type line struct {
+		poLineID string
+		itemID   string
+		qty      float64
+		unitCost float64
+	}
+	var lines []line
+
+	tx, err := h.db.Begin(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	// Fetch lines inside the transaction for consistency
+	rows, err := tx.Query(ctx, `
+		SELECT COALESCE(po_line_id::text, ''), COALESCE(item_id::text, ''),
+		       received_qty, unit_cost
+		FROM goods_receipt_lines WHERE grn_id = $1`, grnID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var l line
+		_ = rows.Scan(&l.poLineID, &l.itemID, &l.qty, &l.unitCost)
+		lines = append(lines, l)
+	}
+
+	for _, l := range lines {
+		if l.qty == 0 {
+			continue
+		}
+		if l.itemID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "A receipt line is missing item_id; cannot post stock"})
+			return
+		}
+
+		movID := uuid.NewString()
+		number := generateMovementNumber(ctx, h.db, companyID)
+		_, err = tx.Exec(ctx, `
+			INSERT INTO stock_movements
+				(id, company_id, number, date, type, item_id, warehouse_id,
+				 quantity, unit_cost, reference, source_type, source_id, notes, created_by)
+			VALUES ($1,$2,$3,NOW(),'purchase',$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+			movID, companyID, number, l.itemID, warehouseID, l.qty, l.unitCost,
+			grnID, "goods_receipt", grnID, "Stock posted from goods receipt", userID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		_, err = tx.Exec(ctx, `
+			INSERT INTO stock_levels (id, company_id, item_id, warehouse_id, qty_on_hand, cmup_cost)
+			VALUES ($1,$2,$3,$4,$5,$6)
+			ON CONFLICT (item_id, warehouse_id, COALESCE(location_id, '00000000-0000-0000-0000-000000000000'::UUID))
+			DO UPDATE SET
+				qty_on_hand = stock_levels.qty_on_hand + $5,
+				cmup_cost   = CASE WHEN $6 > 0 THEN $6 ELSE stock_levels.cmup_cost END,
+				updated_at  = NOW()`,
+			uuid.NewString(), companyID, l.itemID, warehouseID, l.qty, l.unitCost)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		// Update PO line received quantity (schema column is po_id)
+		if l.poLineID != "" {
+			_, _ = tx.Exec(ctx,
+				`UPDATE purchase_order_lines SET received_qty = received_qty + $1 WHERE id = $2`,
+				l.qty, l.poLineID)
+		}
+	}
+
+	// Recalculate PO status and received amount from all validated receipts
+	var receivedAmount float64
+	_ = tx.QueryRow(ctx, `
+		SELECT COALESCE(SUM(l.received_qty * l.unit_cost), 0)
+		FROM goods_receipt_lines l
+		JOIN goods_receipts gr ON gr.id = l.grn_id
+		WHERE gr.po_id = $1 AND gr.status IN ('received','validated')`, poID).Scan(&receivedAmount)
+
+	var remaining int
+	_ = tx.QueryRow(ctx, `
+		SELECT COUNT(*) FROM purchase_order_lines
+		WHERE po_id = $1 AND received_qty < quantity`, poID).Scan(&remaining)
+
+	newStatus := "partially_received"
+	if remaining == 0 {
+		newStatus = "received"
+	}
+	_, _ = tx.Exec(ctx, `
+		UPDATE purchase_orders SET received_amount = $1, status = $2, updated_at = NOW()
+		WHERE id = $3`, receivedAmount, newStatus, poID)
+
+	_, err = tx.Exec(ctx, `
+		UPDATE goods_receipts
+		SET status = 'received', validated_by = $1, validated_at = NOW(), updated_at = NOW()
+		WHERE id = $2`, userID, grnID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Goods receipt validated, stock and PO updated", "status": newStatus})
+}
+
+// generateReceiptNumber creates a sequential GRN number GRN-YYYY-XXXXXX
+func generateReceiptNumber(ctx context.Context, db *pgxpool.Pool, companyID string) string {
+	year := time.Now().Format("2006")
+	var seq int64
+	_ = db.QueryRow(ctx, `
+		SELECT COALESCE(MAX(
+			CAST(SUBSTRING(number FROM 'GRN-\d{4}-(\d+)') AS BIGINT)
+		), 0) + 1
+		FROM goods_receipts
+		WHERE company_id = $1 AND number LIKE $2`,
+		companyID, "GRN-"+year+"-%",
+	).Scan(&seq)
+	return fmt.Sprintf("GRN-%s-%06d", year, seq)
 }
 
 func (h *PurchaseHandler) ListInvoices(c *gin.Context) {

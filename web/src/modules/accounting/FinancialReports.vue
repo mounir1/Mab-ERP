@@ -5,7 +5,7 @@ import {
   RefreshCw, Loader2, Printer, Calendar, AlertCircle,
   CheckCircle, Download, ArrowRight, Minus, DollarSign,
   ChevronRight, BookOpen, Building2
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { accountingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

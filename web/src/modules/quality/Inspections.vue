@@ -8,7 +8,7 @@ import {
   Trash2, Eye, EyeOff, ChevronDown, ChevronUp,
   ClipboardCheck, XCircle, Clock, AlertCircle,
   Loader2, Check, X, Minus
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const dk = (d: string, l: string) => app.darkMode ? d : l

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
-import { ShoppingBag, RefreshCw, Calendar, Users, Download, BarChart3, AlertCircle } from 'lucide-vue-next'
+import { ShoppingBag, RefreshCw, Calendar, Users, Download, BarChart3, AlertCircle } from '@lucide/vue'
 import { reportsAPI } from '@/api/client'
 
 const app = useAppStore()

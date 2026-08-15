@@ -563,7 +563,7 @@ import {
   Eye, CheckCircle2, X, Save, TrendingUp, Layers, AlertOctagon, Box,
   ListX, ChevronLeft, ChevronRight, Terminal, AlertCircle, AlertTriangle,
   Info, Bug
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { diagnosticsAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

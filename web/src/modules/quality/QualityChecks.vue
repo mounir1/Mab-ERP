@@ -6,7 +6,7 @@ import {
   ClipboardCheck, Plus, Search, RefreshCw,
   ChevronLeft, ChevronRight, Loader2, X, Check,
   AlertCircle, CheckCircle2, Minus, HelpCircle, Eye
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const dk = (d: string, l: string) => app.darkMode ? d : l

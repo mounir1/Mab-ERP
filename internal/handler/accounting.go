@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -920,14 +921,37 @@ func (h *AccountingHandler) CreateBudget(c *gin.Context) {
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
+// docTypeForPrefix maps document-number prefixes to numbering_config doc_type
+// values (seeded in 0015_settings.sql as lowercase names).
+func docTypeForPrefix(prefix string) string {
+	switch prefix {
+	case "PO":
+		return "purchase_order"
+	case "PINV", "INV":
+		return "invoice"
+	case "QT":
+		return "quotation"
+	case "GRN", "RCT":
+		return "receipt"
+	case "PAY":
+		return "payment"
+	case "CHQ":
+		return "cheque"
+	case "EXP":
+		return "expense"
+	default:
+		return strings.ToLower(prefix)
+	}
+}
+
 func generateNumber(prefix string, companyID string, db *pgxpool.Pool) string {
 	ctx := context.Background()
 	var next int
 	_ = db.QueryRow(ctx, `
 		UPDATE numbering_config SET next_number = next_number + 1
-		WHERE company_id = $1 AND document_type = $2
+		WHERE company_id = $1 AND doc_type = $2
 		RETURNING next_number
-	`, companyID, prefix).Scan(&next)
+	`, companyID, docTypeForPrefix(prefix)).Scan(&next)
 	if next == 0 {
 		next = 1
 	}

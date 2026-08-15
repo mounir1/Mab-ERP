@@ -5,7 +5,7 @@ import {
   ChevronDown, AlertTriangle, Clock, Package, DollarSign,
   Filter, RefreshCw, ChevronLeft, ChevronRight, User, Calendar,
   FileText, BarChart2, Layers
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { maintenanceAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

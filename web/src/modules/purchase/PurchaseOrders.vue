@@ -6,7 +6,7 @@ import {
   Plus, X, Save, Search, RefreshCw, Edit2, Eye,
   CheckCircle, XCircle, ChevronDown, ChevronUp, Trash2,
   ShoppingCart, Package, TrendingUp, Clock, Send
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 interface POLine {
   item_id?: string

@@ -435,7 +435,7 @@ import {
   BookOpen, Download, Plus, Calendar, TrendingUp, ShoppingCart,
   Search, ArrowUpCircle, ArrowDownCircle, Calculator, Eye, X,
   ChevronLeft, ChevronRight
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { taxAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

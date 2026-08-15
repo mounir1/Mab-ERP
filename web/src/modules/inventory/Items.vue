@@ -460,7 +460,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   Plus, Package, Boxes, FlaskConical, Wrench, Search, Loader2, PackageOpen,
   Pencil, Trash2, X, Save, ChevronLeft, ChevronRight, ChevronsUpDown, ChevronUp, ChevronDown
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { inventoryAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

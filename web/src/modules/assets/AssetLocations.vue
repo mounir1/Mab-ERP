@@ -2,7 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { assetsAPI } from '@/api/client'
-import { MapPin, Plus, Edit, Trash2, RefreshCw, XCircle, ChevronRight, Building2 } from 'lucide-vue-next'
+import { MapPin, Plus, Edit, Trash2, RefreshCw, XCircle, ChevronRight, Building2 } from '@lucide/vue'
 
 const app = useAppStore()
 const locations = ref<any[]>([])

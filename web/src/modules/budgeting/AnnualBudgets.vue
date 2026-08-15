@@ -235,7 +235,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { CalendarDays, Plus, Search, Eye, Pencil, Trash2, CheckCircle2, Lock, X, List } from 'lucide-vue-next'
+import { CalendarDays, Plus, Search, Eye, Pencil, Trash2, CheckCircle2, Lock, X, List } from '@lucide/vue'
 import { budgetingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

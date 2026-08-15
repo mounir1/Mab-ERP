@@ -7,7 +7,7 @@ import {
   ChevronDown, ChevronUp, Trash2, CheckCircle, XCircle,
   CreditCard, DollarSign, AlertTriangle, Clock, Calendar,
   Building2, Wallet
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

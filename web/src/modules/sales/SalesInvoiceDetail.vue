@@ -8,7 +8,7 @@ import {
   ReceiptText, Building2, Calendar, Clock, AlertTriangle,
   FileText, DollarSign, TrendingUp, ChevronRight, Wallet,
   BarChart3, User, Phone, Mail, Globe, Hash, Package
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -25,6 +28,11 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
+	// Fail fast if JWT_SECRET is missing or too weak
+	if secret := os.Getenv("JWT_SECRET"); len(secret) < 32 {
+		log.Fatal("JWT_SECRET must be set to at least 32 characters (see env.example)")
+	}
+
 	// Initialize database
 	db, err := database.NewPool(os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -41,19 +49,27 @@ func main() {
 	h := handler.NewHandler(db)
 
 	// Setup Gin
-	if os.Getenv("APP_ENV") == "production" {
-		gin.SetMode(gin.ReleaseMode)
+	switch strings.ToLower(os.Getenv("LOG_LEVEL")) {
+	case "debug":
+		gin.SetMode(gin.DebugMode)
+	case "test":
+		gin.SetMode(gin.TestMode)
+	default:
+		if os.Getenv("APP_ENV") == "production" {
+			gin.SetMode(gin.ReleaseMode)
+		}
 	}
 
 	r := gin.Default()
 
-	// CORS
+	// CORS — env-driven allowlist (never wildcard + credentials)
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
+		AllowOrigins:     corsOrigins(),
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
 	}))
 
 	// Serve embedded frontend static files
@@ -80,8 +96,19 @@ func main() {
 		c.Data(http.StatusOK, "text/html; charset=utf-8", index)
 	})
 
+	// ─── Health check (public) ───────────────────────────────────────────────
+	r.GET("/api/health", func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+		defer cancel()
+		if err := db.Ping(ctx); err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"status": "error", "db": "down"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"status": "ok", "db": "up"})
+	})
+
 	// ─── Public routes ────────────────────────────────────────────────────────
-	auth := r.Group("/api/auth")
+	auth := r.Group("/api/auth", middleware.RateLimit(30, time.Minute))
 	{
 		auth.POST("/login", h.Auth.Login)
 		auth.POST("/logout", h.Auth.Logout)
@@ -91,7 +118,7 @@ func main() {
 	}
 
 	// ─── Protected routes ─────────────────────────────────────────────────────
-	api := r.Group("/api", middleware.JWTAuth())
+	api := r.Group("/api", middleware.JWTAuth(), middleware.AuditLog(db))
 	{
 		// Dashboard
 		api.GET("/dashboard/summary", h.Dashboard.GetSummary)
@@ -315,7 +342,9 @@ func main() {
 			purchase.PUT("/orders/:id/confirm", h.Purchase.ConfirmPurchaseOrder)
 
 			purchase.GET("/receipts", h.Purchase.ListGoodsReceipts)
+			purchase.GET("/receipts/:id", h.Purchase.GetGoodsReceipt)
 			purchase.POST("/receipts", h.Purchase.CreateGoodsReceipt)
+			purchase.PUT("/receipts/:id/validate", h.Purchase.ValidateGoodsReceipt)
 
 			purchase.GET("/invoices", h.Purchase.ListInvoices)
 			purchase.POST("/invoices", h.Purchase.CreateInvoice)
@@ -889,7 +918,10 @@ func main() {
 			budgeting.GET("/reports", h.Budgeting.GetReports)
 		}
 
-	port := os.Getenv("PORT")
+	port := os.Getenv("APP_PORT")
+	if port == "" {
+		port = os.Getenv("PORT")
+	}
 	if port == "" {
 		port = "8080"
 	}
@@ -898,6 +930,25 @@ func main() {
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
+}
+
+// corsOrigins parses CORS_ORIGINS (comma-separated) into an allowlist.
+// Falls back to localhost dev origins when unset.
+func corsOrigins() []string {
+	raw := os.Getenv("CORS_ORIGINS")
+	if strings.TrimSpace(raw) == "" {
+		return []string{"http://localhost:5173", "http://localhost:4173", "http://localhost:8080"}
+	}
+	var origins []string
+	for _, o := range strings.Split(raw, ",") {
+		if o = strings.TrimSpace(o); o != "" {
+			origins = append(origins, o)
+		}
+	}
+	if len(origins) == 0 {
+		return []string{"http://localhost:5173", "http://localhost:4173", "http://localhost:8080"}
+	}
+	return origins
 }
 
 // must panics if err is not nil — helper for startup-time filesystem ops

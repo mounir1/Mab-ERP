@@ -5,7 +5,7 @@ import { settingsAPI } from '@/api/client'
 import {
   Building2, Plus, Search, Edit2, X, Save, Globe, Phone,
   Mail, MapPin, RefreshCw, CheckCircle, XCircle, ChevronDown
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const loading = ref(false)

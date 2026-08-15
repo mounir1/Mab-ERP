@@ -257,7 +257,7 @@ import { ref, computed, onMounted, defineComponent, h } from 'vue'
 import {
   Plus, Warehouse, CheckCircle, MapPin, Pencil, X, Save, Loader2,
   FolderOpen, FolderTree, ChevronRight
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { inventoryAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

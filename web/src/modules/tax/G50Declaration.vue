@@ -365,9 +365,9 @@ import {
   ScrollText, Calendar, RefreshCw, Save, Loader2, X,
   Percent, TrendingUp, Users, Calculator, History,
   CheckCircle, Clock
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 // Stamp icon workaround — use SquareCheck
-import { Stamp } from 'lucide-vue-next'
+import { Stamp } from '@lucide/vue'
 import { taxAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

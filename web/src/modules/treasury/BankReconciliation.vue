@@ -520,7 +520,7 @@ import {
   GitMerge, CheckCircle, Clock, AlertTriangle,
   Info, Scale, Link2, FileSearch, Search,
   ChevronRight
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { treasuryAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

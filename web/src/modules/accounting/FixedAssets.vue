@@ -5,7 +5,7 @@ import {
   TrendingDown, Wrench, Play, DollarSign, BarChart3,
   Calendar, Tag, ArrowUpDown, AlertCircle, ChevronDown,
   ChevronUp, Activity, Layers, Hash, Clock
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { accountingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

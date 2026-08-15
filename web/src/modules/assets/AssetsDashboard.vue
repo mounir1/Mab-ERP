@@ -6,7 +6,7 @@ import {
   Package, Archive, TrendingDown, DollarSign, Wrench,
   ArrowLeftRight, AlertCircle, RefreshCw, BarChart3,
   CheckCircle, Clock, XCircle, MapPin, FolderOpen
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const loading = ref(false)

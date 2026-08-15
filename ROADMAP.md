@@ -63,16 +63,16 @@ Name token mapping (used everywhere, all the following files):
 
 Findings already logged from the audit:
 
-- [ ] **CORS**: replace `AllowOrigins: ["*"]` + `AllowCredentials: true` with `CORS_ORIGINS` env-driven allowlist
-- [ ] **JWT secret**: fail fast if `JWT_SECRET` unset (remove hardcoded fallback in 2 places)
-- [ ] **`/api/health`** route (compose healthcheck references it; currently 404)
-- [ ] Env mismatch: code reads `PORT`, compose sets `APP_PORT` — unify; wire `JWT_EXPIRY_HOURS`, `REFRESH_TOKEN_EXPIRY_DAYS`, `CORS_ORIGINS`, `LOG_LEVEL`
-- [ ] **Logout** is a no-op → add refresh-token revocation/rotation
-- [ ] Implement `ForgotPassword` / `ResetPassword` stubs (currently TODO)
-- [ ] Implement `AuditLog` middleware (TODO), `hasPermission` in auth store (stub)
-- [ ] `purchase_inventory.go:270` goods-receipt TODO (PO received quantities + stock movements)
-- [ ] Rate limiting on `/api/auth/*`
-- [ ] `npm audit` fixes (2 vulns) + replace deprecated `lucide-vue-next`
+- [x] **CORS**: replace `AllowOrigins: ["*"]` + `AllowCredentials: true` with `CORS_ORIGINS` env-driven allowlist
+- [x] **JWT secret**: fail fast if `JWT_SECRET` unset (remove hardcoded fallback in 2 places)
+- [x] **`/api/health`** route (compose healthcheck references it; currently 404)
+- [x] Env mismatch: code reads `PORT`, compose sets `APP_PORT` — unify; wire `JWT_EXPIRY_HOURS`, `REFRESH_TOKEN_EXPIRY_DAYS`, `CORS_ORIGINS`, `LOG_LEVEL`
+- [x] **Logout** is a no-op → add refresh-token revocation/rotation
+- [x] Implement `ForgotPassword` / `ResetPassword` stubs (currently TODO)
+- [x] Implement `AuditLog` middleware (TODO), `hasPermission` in auth store (stub)
+- [x] `purchase_inventory.go:270` goods-receipt TODO (PO received quantities + stock movements)
+- [x] Rate limiting on `/api/auth/*`
+- [x] `npm audit` fixes (2 vulns) + replace deprecated `lucide-vue-next`
 - [ ] Tests: Go unit tests (handlers/db/migration runner), frontend type-check/lint as gates
 
 **Exit check:** `go vet ./...`, tests green, fresh migration run, auth reboot safe.

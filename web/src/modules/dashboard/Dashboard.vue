@@ -9,7 +9,7 @@ import {
   ClipboardList, Truck, ArrowUpRight, ArrowDownRight, Clock,
   FileText, Activity, RefreshCw, ChevronRight, Layers,
   ReceiptText, Factory, CreditCard, Wallet
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

@@ -155,7 +155,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { TrendingUp, RefreshCw, Tag, BarChart2, List } from 'lucide-vue-next'
+import { TrendingUp, RefreshCw, Tag, BarChart2, List } from '@lucide/vue'
 import { budgetingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

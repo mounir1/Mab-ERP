@@ -7,7 +7,7 @@ import {
   Users, ChevronRight, BarChart3, Percent, Edit2, Trash2,
   CircleDot, CheckCircle2, XCircle, MessageSquare, Calendar,
   User, Building2, MoveRight
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 

@@ -74,6 +74,7 @@ type User struct {
 	PasswordHash string     `json:"-" db:"password_hash"`
 	FullName     string     `json:"full_name" db:"full_name"`
 	Role         string     `json:"role" db:"role"`
+	RoleID       string     `json:"role_id" db:"role_id"`
 	BranchID     string     `json:"branch_id" db:"branch_id"`
 	IsActive     bool       `json:"is_active" db:"is_active"`
 	LastLoginAt  *time.Time `json:"last_login_at,omitempty" db:"last_login_at"`

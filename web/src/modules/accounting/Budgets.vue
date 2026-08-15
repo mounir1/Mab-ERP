@@ -5,7 +5,7 @@ import {
   TrendingUp, TrendingDown, AlertTriangle, BarChart3,
   Calendar, Pencil, DollarSign, Filter, ChevronDown,
   Activity, Hash, FileText
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { accountingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

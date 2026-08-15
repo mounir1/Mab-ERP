@@ -7,7 +7,7 @@ import {
   ChevronLeft, ChevronRight, Loader2, X,
   AlertTriangle, ShieldAlert, Info, Zap,
   Pencil, Trash2, ChevronDown, ArrowRight
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const dk = (d: string, l: string) => app.darkMode ? d : l

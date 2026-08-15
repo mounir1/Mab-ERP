@@ -201,7 +201,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Link, Plus, Search, Pencil, Trash2, X, Loader2, AlertTriangle, CheckCircle2, Clock, XCircle, LayoutList } from 'lucide-vue-next'
+import { Link, Plus, Search, Pencil, Trash2, X, Loader2, AlertTriangle, CheckCircle2, Clock, XCircle, LayoutList } from '@lucide/vue'
 import { fleetAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

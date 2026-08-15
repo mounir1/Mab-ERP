@@ -4,7 +4,7 @@ import {
   RefreshCw, TrendingUp, AlertTriangle, CheckCircle, Package,
   Cog, CalendarClock, ShoppingCart, ChevronDown, ChevronUp,
   BarChart2, Search, Download, Info
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { manufacturingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

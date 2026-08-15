@@ -241,7 +241,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   Plus, Search, Loader2, Flag, CheckCircle, Clock, AlertTriangle, CalendarDays, User,
   Pencil, Trash2, X, ChevronDown
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { projectsAPI, hrAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

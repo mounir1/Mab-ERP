@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
-import { FolderKanban, RefreshCw, Calendar, Target, Clock, DollarSign, CheckSquare, Download, BarChart3 } from 'lucide-vue-next'
+import { FolderKanban, RefreshCw, Calendar, Target, Clock, DollarSign, CheckSquare, Download, BarChart3 } from '@lucide/vue'
 import { reportsAPI } from '@/api/client'
 
 const app = useAppStore()

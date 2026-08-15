@@ -192,7 +192,7 @@ import {
   RefreshCw, Loader2, BarChart2, CreditCard, FileText,
   ArrowUpRight, ArrowDownLeft, ArrowDownToLine,
   TrendingUp, TrendingDown, Landmark, DollarSign
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { treasuryAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

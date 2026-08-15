@@ -2,7 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { assetsAPI } from '@/api/client'
-import { FolderOpen, Plus, Edit, Trash2, RefreshCw, XCircle, ChevronRight } from 'lucide-vue-next'
+import { FolderOpen, Plus, Edit, Trash2, RefreshCw, XCircle, ChevronRight } from '@lucide/vue'
 
 const app = useAppStore()
 const categories = ref<any[]>([])

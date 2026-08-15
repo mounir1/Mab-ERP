@@ -337,7 +337,7 @@ import {
   Landmark, Wallet, Building2, FileText, TrendingUp, TrendingDown,
   ArrowLeftRight, ArrowUpRight, ArrowDownLeft, Activity,
   RefreshCw, Plus, X, Loader2
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { treasuryAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

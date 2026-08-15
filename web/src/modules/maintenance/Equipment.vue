@@ -6,7 +6,7 @@ import {
   Search, Plus, Edit2, Trash2, Eye, X, ChevronDown, ChevronUp,
   Settings, MapPin, Building2, Calendar, DollarSign, AlertTriangle,
   CheckCircle, Clock, Archive, Tag, Wrench, RefreshCw, Filter
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 

@@ -6,7 +6,7 @@ import {
   ArrowUpDown, Calendar, Hash, FileText, Tag, ArrowRight,
   TrendingUp, DollarSign, Clock, Send, AlertTriangle,
   Minus, SlidersHorizontal, ChevronDown
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { accountingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

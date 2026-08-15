@@ -340,7 +340,7 @@ import {
   ArrowUpDown, ShoppingCart, ArrowLeftRight, SlidersHorizontal, Search, Loader2,
   X, ChevronLeft, ChevronRight, ChevronsUpDown, ChevronUp, ChevronDown,
   TrendingUp, TrendingDown, RefreshCcw, RotateCcw, Settings, Factory
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { inventoryAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

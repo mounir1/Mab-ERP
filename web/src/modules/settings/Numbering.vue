@@ -2,7 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { settingsAPI } from '@/api/client'
-import { Hash, Save, RefreshCw, Eye, RotateCcw, Info, ChevronDown, ChevronUp } from 'lucide-vue-next'
+import { Hash, Save, RefreshCw, Eye, RotateCcw, Info, ChevronDown, ChevronUp } from '@lucide/vue'
 
 const app = useAppStore()
 const loading = ref(false)

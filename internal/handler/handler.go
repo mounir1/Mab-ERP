@@ -2,10 +2,15 @@ package handler
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -92,6 +97,7 @@ type LoginResponse struct {
 	Token        string        `json:"token"`
 	RefreshToken string        `json:"refresh_token"`
 	User         *models.User  `json:"user"`
+	Permissions  []string      `json:"permissions"`
 	ExpiresAt    time.Time     `json:"expires_at"`
 }
 
@@ -109,13 +115,14 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		        COALESCE(company_id::text, ''),
 		        COALESCE(branch_id::text, ''),
 		        COALESCE(tenant_id::text, ''),
-		        is_active
+		        is_active,
+		        COALESCE(role_id::text, '')
 		 FROM users WHERE username = $1 AND is_active = true`,
 		req.Username,
 	).Scan(
 		&user.ID, &user.Username, &user.Email, &user.PasswordHash,
 		&user.FullName, &user.Role, &user.CompanyID, &user.BranchID,
-		&user.TenantID, &user.IsActive,
+		&user.TenantID, &user.IsActive, &user.RoleID,
 	)
 	if err != nil {
 		log.Printf("[LOGIN ERROR] DB scan failed for user '%s': %v", req.Username, err)
@@ -128,7 +135,20 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	expiresAt := time.Now().Add(8 * time.Hour)
+	// Load permissions for this user's role (admin/superadmin implied via role name)
+	permissions := []string{}
+	permJSON := ""
+	if user.RoleID != "" {
+		_ = h.db.QueryRow(ctx,
+			`SELECT COALESCE(permissions, '[]')::text FROM roles WHERE id = $1`,
+			user.RoleID,
+		).Scan(&permJSON)
+		if permJSON != "" && permJSON != "[]" {
+			_ = json.Unmarshal([]byte(permJSON), &permissions)
+		}
+	}
+
+	expiresAt := time.Now().Add(accessTokenTTL())
 	claims := &middleware.Claims{
 		UserID:    user.ID,
 		Role:      user.Role,
@@ -155,7 +175,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		Role:      user.Role,
 		CompanyID: user.CompanyID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * 24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(refreshTokenTTL())),
 			ID:        uuid.NewString(),
 		},
 	}
@@ -170,12 +190,32 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		Token:        signed,
 		RefreshToken: signedRefresh,
 		User:         &user,
+		Permissions:  permissions,
 		ExpiresAt:    expiresAt,
 	})
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
-	// In a production system, blacklist the token here
+	var req struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+	_ = c.ShouldBindJSON(&req)
+	ctx := context.Background()
+
+	if req.RefreshToken != "" {
+		claims := &middleware.Claims{}
+		token, err := jwt.ParseWithClaims(req.RefreshToken, claims, func(t *jwt.Token) (interface{}, error) {
+			return jwtKey(), nil
+		})
+		if err == nil && token.Valid && claims.ID != "" {
+			// Revoke the refresh token by JTI so it can no longer be rotated
+			_, _ = h.db.Exec(ctx, `
+				INSERT INTO revoked_tokens (jti, user_id, reason)
+				VALUES ($1, $2, 'logout')
+				ON CONFLICT (jti) DO NOTHING`,
+				claims.ID, claims.UserID)
+		}
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
 
@@ -188,6 +228,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
+	ctx := context.Background()
 	claims := &middleware.Claims{}
 	token, err := jwt.ParseWithClaims(req.RefreshToken, claims, func(t *jwt.Token) (interface{}, error) {
 		return jwtKey(), nil
@@ -197,7 +238,26 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	expiresAt := time.Now().Add(8 * time.Hour)
+	// Reject revoked refresh tokens
+	if claims.ID != "" {
+		var revoked bool
+		if err := h.db.QueryRow(ctx,
+			`SELECT EXISTS(SELECT 1 FROM revoked_tokens WHERE jti = $1)`,
+			claims.ID,
+		).Scan(&revoked); err == nil && revoked {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token has been revoked"})
+			return
+		}
+	}
+
+	// Rotation: the presented refresh token is single-use, issue a new one
+	_, _ = h.db.Exec(ctx, `
+		INSERT INTO revoked_tokens (jti, user_id, reason)
+		VALUES ($1, $2, 'rotation')
+		ON CONFLICT (jti) DO NOTHING`,
+		claims.ID, claims.UserID)
+
+	expiresAt := time.Now().Add(accessTokenTTL())
 	newClaims := &middleware.Claims{
 		UserID:    claims.UserID,
 		Role:      claims.Role,
@@ -214,7 +274,19 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)
 	signed, _ := newToken.SignedString(jwtKey())
 
-	c.JSON(http.StatusOK, gin.H{"token": signed, "expires_at": expiresAt})
+	refreshClaims := &middleware.Claims{
+		UserID:    claims.UserID,
+		Role:      claims.Role,
+		CompanyID: claims.CompanyID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(refreshTokenTTL())),
+			ID:        uuid.NewString(),
+		},
+	}
+	newRefresh := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
+	signedRefresh, _ := newRefresh.SignedString(jwtKey())
+
+	c.JSON(http.StatusOK, gin.H{"token": signed, "refresh_token": signedRefresh, "expires_at": expiresAt})
 }
 
 func (h *AuthHandler) ForgotPassword(c *gin.Context) {
@@ -225,8 +297,30 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Valid email required"})
 		return
 	}
-	// TODO: send reset email
-	c.JSON(http.StatusOK, gin.H{"message": "If the email exists, a reset link has been sent"})
+
+	ctx := context.Background()
+
+	// Generate a reset token and store only its SHA-256 hash
+	raw := randomToken(32)
+	hash := sha256Hex(raw)
+	expiresAt := time.Now().Add(1 * time.Hour)
+
+	_, err := h.db.Exec(ctx,
+		`UPDATE users SET reset_token = $1, reset_token_expires = $2
+		 WHERE email = $3 AND is_active = true`,
+		hash, expiresAt, req.Email,
+	)
+	if err != nil {
+		log.Printf("[FORGOT PASSWORD] DB error: %v", err)
+	}
+
+	// Always return the same generic response to avoid user enumeration.
+	// In non-production environments, expose the token for testing.
+	resp := gin.H{"message": "If the email exists, a reset link has been sent"}
+	if os.Getenv("APP_ENV") != "production" {
+		resp["reset_token"] = raw
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
@@ -238,16 +332,76 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
-	// TODO: validate token and update password
+
+	ctx := context.Background()
+	hash := sha256Hex(req.Token)
+
+	var userID string
+	err := h.db.QueryRow(ctx,
+		`SELECT id FROM users
+		 WHERE reset_token = $1 AND reset_token_expires > NOW() AND is_active = true`,
+		hash,
+	).Scan(&userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or expired reset token"})
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		return
+	}
+
+	_, err = h.db.Exec(ctx,
+		`UPDATE users
+		 SET password_hash = $1, reset_token = NULL, reset_token_expires = NULL, updated_at = NOW()
+		 WHERE id = $2`,
+		string(hashedPassword), userID,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reset password"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "Password reset successfully"})
 }
 
 func jwtKey() []byte {
-	s := os.Getenv("JWT_SECRET")
-	if s == "" {
-		s = "mab-erp-default-secret-change-in-production"
+	return []byte(os.Getenv("JWT_SECRET"))
+}
+
+// accessTokenTTL returns the JWT expiry from JWT_EXPIRY_HOURS (default 8h).
+func accessTokenTTL() time.Duration {
+	h, err := strconv.Atoi(os.Getenv("JWT_EXPIRY_HOURS"))
+	if err != nil || h <= 0 {
+		return 8 * time.Hour
 	}
-	return []byte(s)
+	return time.Duration(h) * time.Hour
+}
+
+// refreshTokenTTL returns the refresh token expiry from REFRESH_TOKEN_EXPIRY_DAYS (default 30d).
+func refreshTokenTTL() time.Duration {
+	d, err := strconv.Atoi(os.Getenv("REFRESH_TOKEN_EXPIRY_DAYS"))
+	if err != nil || d <= 0 {
+		return 30 * 24 * time.Hour
+	}
+	return time.Duration(d) * 24 * time.Hour
+}
+
+// randomToken returns a cryptographically random hex string of n bytes.
+func randomToken(n int) string {
+	b := make([]byte, n)
+	if _, err := rand.Read(b); err != nil {
+		return uuid.NewString() + uuid.NewString()
+	}
+	return hex.EncodeToString(b)
+}
+
+// sha256Hex returns the lowercase hex SHA-256 digest of s.
+func sha256Hex(s string) string {
+	sum := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(sum[:])
 }
 
 // DashboardHandler is defined in sales.go

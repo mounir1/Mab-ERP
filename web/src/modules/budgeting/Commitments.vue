@@ -225,7 +225,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Handshake, Plus, Search, Pencil, Trash2, CheckCircle2, PackageCheck, Ban } from 'lucide-vue-next'
+import { Handshake, Plus, Search, Pencil, Trash2, CheckCircle2, PackageCheck, Ban } from '@lucide/vue'
 import { budgetingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

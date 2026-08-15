@@ -261,7 +261,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   Plus, Search, Loader2, Receipt, CheckCircle, Clock, Wallet,
   Pencil, Trash2, X, ChevronDown, Send
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { projectsAPI, hrAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

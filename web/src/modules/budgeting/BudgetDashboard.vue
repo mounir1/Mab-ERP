@@ -149,7 +149,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   BarChart2, RefreshCw, TrendingUp, CalendarDays,
   Building2, Handshake, DollarSign, Target, AlertTriangle, CheckCircle2
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { budgetingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

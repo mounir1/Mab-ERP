@@ -216,7 +216,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Fuel, Plus, Search, Pencil, Trash2, X, Loader2, AlertTriangle, DropletIcon, DollarSign, BarChart3, TrendingUp } from 'lucide-vue-next'
+import { Fuel, Plus, Search, Pencil, Trash2, X, Loader2, AlertTriangle, DropletIcon, DollarSign, BarChart3, TrendingUp } from '@lucide/vue'
 import { fleetAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

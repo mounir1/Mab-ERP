@@ -6,7 +6,7 @@ import {
   GitBranch, Plus, Edit2, X, Save, RefreshCw, Trash2, Play,
   ChevronDown, ChevronRight, CheckCircle, XCircle, AlertTriangle,
   ArrowRight, Settings2, Zap
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const loading = ref(false)

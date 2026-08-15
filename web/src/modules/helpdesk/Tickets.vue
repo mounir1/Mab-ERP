@@ -6,7 +6,7 @@ import {
   Ticket, Plus, Search, Filter, RefreshCw, X, Edit, Trash2,
   MessageSquare, CheckCircle2, ChevronDown, User, Tag, Clock,
   AlertTriangle, Eye, Send
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const loading = ref(true)

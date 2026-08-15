@@ -4,7 +4,7 @@ import { useAppStore } from '@/stores/app'
 import {
   FileBarChart, RefreshCw, Calendar, TrendingUp, TrendingDown,
   DollarSign, Scale, PiggyBank, BarChart3, Download
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { reportsAPI } from '@/api/client'
 
 const app = useAppStore()

@@ -172,7 +172,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { FilePen, Plus, Search, Pencil, Trash2, CheckCircle2 } from 'lucide-vue-next'
+import { FilePen, Plus, Search, Pencil, Trash2, CheckCircle2 } from '@lucide/vue'
 import { budgetingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

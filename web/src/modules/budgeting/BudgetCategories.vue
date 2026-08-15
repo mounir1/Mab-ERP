@@ -135,7 +135,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Tag, Plus, Search, Pencil, Trash2 } from 'lucide-vue-next'
+import { Tag, Plus, Search, Pencil, Trash2 } from '@lucide/vue'
 import { budgetingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

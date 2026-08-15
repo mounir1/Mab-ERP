@@ -5,7 +5,7 @@ import { assetsAPI } from '@/api/client'
 import {
   Wrench, Plus, Edit, Trash2, RefreshCw, XCircle,
   CheckCircle, Clock, AlertCircle, Calendar
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const records = ref<any[]>([])

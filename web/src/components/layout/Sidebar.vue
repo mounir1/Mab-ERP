@@ -87,7 +87,7 @@ import {
   Tag,
   FilePen,
   Handshake
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const props = defineProps<{ collapsed: boolean }>()
 const route = useRoute()

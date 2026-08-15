@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { Eye, EyeOff, LogIn, Loader2, AlertCircle, Lock, User } from 'lucide-vue-next'
+import { Eye, EyeOff, LogIn, Loader2, AlertCircle, Lock, User } from '@lucide/vue'
 
 const router = useRouter()
 const route = useRoute()

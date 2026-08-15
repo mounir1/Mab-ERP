@@ -147,7 +147,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   ArrowLeft, Loader2, FolderX, Pencil, Flag, CheckSquare, CalendarDays, Info
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { projectsAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

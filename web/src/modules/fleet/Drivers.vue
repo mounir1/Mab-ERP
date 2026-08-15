@@ -236,7 +236,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { UserCheck, Plus, Search, Pencil, Trash2, X, Loader2, AlertTriangle, Users, ShieldAlert, Calendar, BadgeCheck } from 'lucide-vue-next'
+import { UserCheck, Plus, Search, Pencil, Trash2, X, Loader2, AlertTriangle, Users, ShieldAlert, Calendar, BadgeCheck } from '@lucide/vue'
 import { fleetAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

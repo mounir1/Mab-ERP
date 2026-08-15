@@ -5,7 +5,7 @@ import { assetsAPI } from '@/api/client'
 import {
   BarChart3, RefreshCw, Download, FileText,
   TrendingDown, Wrench, ArrowLeftRight, Package
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const loading = ref(false)

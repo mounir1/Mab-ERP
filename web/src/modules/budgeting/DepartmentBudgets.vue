@@ -152,7 +152,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Building2, Plus, Search, Pencil, Trash2 } from 'lucide-vue-next'
+import { Building2, Plus, Search, Pencil, Trash2 } from '@lucide/vue'
 import { budgetingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

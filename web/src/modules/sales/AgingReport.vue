@@ -6,7 +6,7 @@ import {
   RefreshCw, BarChart3, AlertTriangle, CheckCircle,
   TrendingUp, Clock, ChevronDown, ChevronUp,
   Search, Phone, Mail, Download
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

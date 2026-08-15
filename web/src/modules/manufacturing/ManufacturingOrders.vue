@@ -5,7 +5,7 @@ import {
   Cog, Play, CheckCircle, XCircle, Clock, AlertCircle,
   X, Check, Package, Factory, TrendingUp, BarChart2,
   Calendar, Wrench
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { manufacturingAPI, inventoryAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

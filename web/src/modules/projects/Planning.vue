@@ -220,7 +220,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import {
   Plus, Loader2, Pencil, Trash2, X, ChevronDown, ChevronLeft, ChevronRight, CalendarDays
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { projectsAPI, hrAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

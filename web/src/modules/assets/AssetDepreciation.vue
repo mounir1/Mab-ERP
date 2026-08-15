@@ -5,7 +5,7 @@ import { assetsAPI } from '@/api/client'
 import {
   TrendingDown, RefreshCw, Play, CheckSquare,
   XCircle, AlertCircle, Calendar
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const schedules = ref<any[]>([])

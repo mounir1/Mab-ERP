@@ -4,7 +4,7 @@ import {
   DollarSign, Plus, RefreshCw, X, ChevronUp, ChevronDown, Eye,
   CheckCircle, CreditCard, Users, TrendingUp, Play, ArrowUpDown,
   AlertCircle, Download, BarChart2, Banknote
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { hrAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

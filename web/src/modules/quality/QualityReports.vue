@@ -7,7 +7,7 @@ import {
   TrendingUp, TrendingDown, Target, ShieldCheck,
   AlertTriangle, Wrench, ClipboardList, Loader2,
   CheckCircle2, XCircle, Activity, Percent
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const dk = (d: string, l: string) => app.darkMode ? d : l

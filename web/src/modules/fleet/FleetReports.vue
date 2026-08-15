@@ -163,7 +163,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   BarChart3, RefreshCw, Truck, PieChart, TrendingUp, Trophy, UserCheck, Fuel,
   Car, Wrench, DollarSign, Users, Activity, ShieldCheck
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { fleetAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

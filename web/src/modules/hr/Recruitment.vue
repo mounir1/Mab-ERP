@@ -6,7 +6,7 @@ import {
   MapPin, Calendar, Clock, Building2, User, Mail, Phone,
   FileText, DollarSign, ChevronLeft, ChevronRight, MoreHorizontal,
   AlertCircle, RefreshCw, Award, Loader2, UserCheck, UserX
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { hrAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

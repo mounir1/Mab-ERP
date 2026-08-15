@@ -6,7 +6,7 @@ import {
   TrendingUp, TrendingDown, Landmark, Scale, DollarSign,
   BarChart3, Network, Filter, ArrowUpDown, SlidersHorizontal,
   Layers, BookOpen, Hash, Globe, Check, TreePine
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { accountingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 
@@ -552,7 +552,7 @@ onMounted(load)
 <!-- ── Recursive tree row component ──────────────────────────────────────────── -->
 <script lang="ts">
 import { defineComponent, h, type PropType } from 'vue'
-import { ChevronRight, ChevronDown, Pencil, Check, Scale } from 'lucide-vue-next'
+import { ChevronRight, ChevronDown, Pencil, Check, Scale } from '@lucide/vue'
 
 const TreeAccountRow = defineComponent({
   name: 'TreeAccountRow',

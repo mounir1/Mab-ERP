@@ -6,7 +6,7 @@ import {
   Plus, X, Save, Search, RefreshCw, Edit2, Eye,
   Send, XCircle, ChevronDown, ChevronUp, Trash2,
   FileText, ArrowRightCircle, Calendar, Hash, Building2
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

@@ -5,7 +5,7 @@ import { settingsAPI } from '@/api/client'
 import {
   ScrollText, Search, RefreshCw, Download, ChevronLeft, ChevronRight,
   Filter, X, Eye, User, Clock, Globe, Monitor, AlertCircle
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const app = useAppStore()
 const loading = ref(false)

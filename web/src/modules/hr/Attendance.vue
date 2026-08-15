@@ -4,7 +4,7 @@ import {
   Clock, Plus, RefreshCw, Search, X, Filter, ChevronUp, ChevronDown,
   ArrowUpDown, Edit, Save, CalendarCheck, CheckCircle, XCircle,
   AlertTriangle, Users, BarChart2
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { hrAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

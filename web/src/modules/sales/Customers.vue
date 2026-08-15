@@ -7,7 +7,7 @@ import {
   Building2, User, Phone, Mail, Globe, MapPin, FileText,
   CreditCard, DollarSign, ShieldCheck, ChevronDown, ChevronUp,
   CheckCircle, XCircle, MoreVertical, Eye
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 

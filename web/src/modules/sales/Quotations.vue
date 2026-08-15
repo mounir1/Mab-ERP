@@ -7,7 +7,7 @@ import {
   ChevronDown, ChevronUp, Trash2, Send, ArrowRight,
   CheckCircle, XCircle, Clock, Hash, Calendar, User, Building2,
   DollarSign, Percent, Package
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

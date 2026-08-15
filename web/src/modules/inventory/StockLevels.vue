@@ -187,7 +187,7 @@ import {
   Package, TrendingUp, AlertTriangle, XCircle, Search, RefreshCw, Loader2,
   BarChart3, ChevronLeft, ChevronRight, ChevronsUpDown, ChevronUp, ChevronDown,
   CheckCircle, MinusCircle
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { inventoryAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 

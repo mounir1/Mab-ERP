@@ -5,7 +5,7 @@ import {
   Wrench, CheckCircle, Clock, AlertTriangle,
   TrendingUp, TrendingDown, Package, Shield,
   ChevronDown, Settings, FileText
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { maintenanceAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 
