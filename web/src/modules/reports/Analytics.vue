@@ -79,7 +79,7 @@ const totalSegmentRevenue = computed(() =>
             </span>
             <div class="w-full rounded-t transition-all duration-700 bg-violet-500"
               :style="{ height: Math.max((y.revenue / Math.max(...(data.yoy_revenue || []).map((r: any) => r.revenue), 1)) * 90, 4) + 'px' }" />
-            <span class="text-sm font-bold" :class="app.year === selectedYear ? 'text-violet-500' : (app.darkMode ? 'text-slate-400' : 'text-slate-500')">{{ y.year }}</span>
+            <span class="text-sm font-bold" :class="y.year === selectedYear ? 'text-violet-500' : (app.darkMode ? 'text-slate-400' : 'text-slate-500')">{{ y.year }}</span>
           </div>
           <p v-if="!data.yoy_revenue?.length" class="text-slate-400 text-sm">Aucune donnée</p>
         </div>

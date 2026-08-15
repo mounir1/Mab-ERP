@@ -15,7 +15,7 @@ interface CostCenter {
   id: string
   code: string
   name: string
-
+  type?: string
   parent_id: string | null
   is_active: boolean
   created_at: string
@@ -33,7 +33,7 @@ const editTarget = ref<CostCenter | null>(null)
 const form = ref({
   code: '',
   name: '',
-  
+  type: '',
   parent_id: null as string | null,
   is_active: true
 })
@@ -90,7 +90,7 @@ function openCreate() {
 
 function openEdit(c: CostCenter) {
   editTarget.value = c
-  form.value = { code: c.code, name: c.name, type: c.type, parent_id: c.parent_id, is_active: c.is_active }
+  form.value = { code: c.code, name: c.name, type: c.type ?? '', parent_id: c.parent_id, is_active: c.is_active }
   showModal.value = true
 }
 
@@ -230,14 +230,14 @@ onMounted(load)
                 <!-- Name -->
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2">
-                    <component :is="typeConfig[cc.type]?.icon ?? Building2" class="w-3.5 h-3.5 flex-shrink-0 opacity-50" :class="typeConfig[cc.type]?.color" />
+                    <component :is="typeConfig[cc.type ?? '']?.icon ?? Building2" class="w-3.5 h-3.5 flex-shrink-0 opacity-50" :class="typeConfig[cc.type ?? '']?.color" />
                     <span class="text-[13px] text-slate-200 font-medium">{{ cc.name }}</span>
                   </div>
                 </td>
                 <!-- Type -->
                 <td class="px-4 py-3">
-                  <span :class="['inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border', typeConfig[cc.type]?.bg, typeConfig[cc.type]?.color, typeConfig[cc.type]?.border]">
-                    {{ typeConfig[cc.type]?.label ?? cc.type }}
+                  <span :class="['inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border', typeConfig[cc.type ?? '']?.bg, typeConfig[cc.type ?? '']?.color, typeConfig[cc.type ?? '']?.border]">
+                    {{ typeConfig[cc.type ?? '']?.label ?? cc.type }}
                   </span>
                 </td>
                 <!-- Parent -->

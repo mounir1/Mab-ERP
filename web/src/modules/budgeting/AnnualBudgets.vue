@@ -212,7 +212,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y" :class="app.darkMode ? 'divide-gray-700' : 'divide-gray-100'">
-                <tr v-for="li in detailBudget.line_items as Record<string, unknown>[]" :key="li.id as string">
+                <tr v-for="li in detailBudget.line_items as Record<string, any>[]" :key="li.id as string">
                   <td class="px-3 py-2">{{ li.category_name }}</td>
                   <td class="px-3 py-2 text-xs" :class="app.darkMode ? 'text-gray-400' : 'text-gray-500'">{{ li.account_code }} {{ li.account_name }}</td>
                   <td class="px-3 py-2 text-right">{{ fmt(li.budget_amount as number) }}</td>
@@ -240,14 +240,14 @@ import { budgetingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 
 const app = useAppStore()
-const budgets = ref<Record<string, unknown>[]>([])
+const budgets = ref<Record<string, any>[]>([])
 const search = ref('')
 const filterYear = ref('')
 const filterStatus = ref('')
 const showModal = ref(false)
 const saving = ref(false)
 const editing = ref(false)
-const detailBudget = ref<Record<string, unknown> | null>(null)
+const detailBudget = ref<Record<string, any> | null>(null)
 const currentYear = new Date().getFullYear()
 const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i)
 

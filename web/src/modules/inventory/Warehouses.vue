@@ -253,7 +253,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, defineComponent, h } from 'vue'
+import { ref, computed, onMounted, defineComponent, h, type DefineComponent } from 'vue'
 import {
   Plus, Warehouse, CheckCircle, MapPin, Pencil, X, Save, Loader2,
   FolderOpen, FolderTree, ChevronRight
@@ -309,7 +309,11 @@ const rootLocations = computed(() =>
 
 // ─── Location Tree Node Component ─────────────────────────────────────────────
 
-const LocationNode = defineComponent({
+const LocationNode: DefineComponent<{
+  location: Location
+  allLocations: Location[]
+  depth?: number
+}> = defineComponent({
   name: 'LocationNode',
   props: {
     location: { type: Object as () => Location, required: true },
@@ -323,10 +327,12 @@ const LocationNode = defineComponent({
     )
     const expanded = ref(true)
 
+    const depth = props.depth ?? 0
+
     return () => h('div', { class: 'select-none' }, [
       h('div', {
         class: `flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 group`,
-        style: { paddingLeft: `${props.depth * 16 + 8}px` },
+        style: { paddingLeft: `${depth * 16 + 8}px` },
       }, [
         h('div', {
           class: `w-4 h-4 flex items-center justify-center cursor-pointer ${children.value.length === 0 ? 'invisible' : ''}`,
@@ -353,7 +359,7 @@ const LocationNode = defineComponent({
               key: child.id,
               location: child,
               allLocations: props.allLocations,
-              depth: props.depth + 1,
+              depth: depth + 1,
               onAddChild: (loc: Location) => emit('add-child', loc)
             })
           ))

@@ -194,7 +194,7 @@
 
           <!-- Account type selector (new only) -->
           <div v-if="!editMode" class="px-6 pt-4 flex gap-3">
-            <button v-for="t in ['bank', 'cash']" :key="t" @click="modalAccountType = t"
+            <button v-for="t in accountTypes" :key="t" @click="modalAccountType = t"
               :class="modalAccountType === t ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'"
               class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border-2 rounded-xl text-sm font-semibold transition-all capitalize">
               <Building2 v-if="t === 'bank'" class="w-4 h-4" />
@@ -314,10 +314,11 @@ const activeTab = ref<'bank' | 'cash'>('bank')
 const modalAccountType = ref<'bank' | 'cash'>('bank')
 const editId = ref('')
 
-const tabs = [
+const tabs: { id: 'bank' | 'cash'; label: string; icon: any }[] = [
   { id: 'bank', label: 'Bank', icon: Building2 },
   { id: 'cash', label: 'Cash', icon: Wallet },
 ]
+const accountTypes: ('bank' | 'cash')[] = ['bank', 'cash']
 
 const bankAccounts = ref<any[]>([])
 const cashAccounts = ref<any[]>([])

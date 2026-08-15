@@ -274,7 +274,7 @@ onMounted(load)
 
           <!-- Events -->
           <template v-if="day && eventsByDay[day]">
-            <div v-for="(ev, ei) in eventsByDay[day].slice(0, 3)" :key="ev.id"
+            <div v-for="ev in eventsByDay[day].slice(0, 3)" :key="ev.id"
               @click="openDetail(ev)"
               :class="['rounded px-1.5 py-0.5 text-xs cursor-pointer mb-0.5 truncate transition-opacity hover:opacity-80']"
               :style="{ backgroundColor: (ev.color || typeColor(ev.type)) + '25', color: ev.color || typeColor(ev.type), borderLeft: `2px solid ${ev.color || typeColor(ev.type)}` }">

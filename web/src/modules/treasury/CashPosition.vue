@@ -16,7 +16,7 @@
           <RefreshCw class="w-4 h-4" :class="loading ? 'animate-spin' : ''" />
           Refresh
         </button>
-        <button @click="openAddCash"
+        <button @click="openAddCash()"
           class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm">
           <Plus class="w-4 h-4" />
           Add Account

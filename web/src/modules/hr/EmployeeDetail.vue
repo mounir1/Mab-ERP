@@ -381,7 +381,7 @@ function openEdit() {
 async function loadAttendance() {
   loadingAttendance.value = true
   try {
-    const res = await hrAPI.getAttendance({ employee_id: route.params.id })
+    const res = await hrAPI.getAttendance({ employee_id: String(route.params.id) })
     attendance.value = res.data || []
   } catch { attendance.value = [] }
   finally { loadingAttendance.value = false }
@@ -389,7 +389,7 @@ async function loadAttendance() {
 async function loadLeaves() {
   loadingLeaves.value = true
   try {
-    const res = await hrAPI.getLeaveRequests({ employee_id: route.params.id })
+    const res = await hrAPI.getLeaveRequests({ employee_id: String(route.params.id) })
     leaves.value = res.data || []
   } catch { leaves.value = [] }
   finally { loadingLeaves.value = false }
@@ -397,7 +397,7 @@ async function loadLeaves() {
 async function loadPayslips() {
   loadingPayslips.value = true
   try {
-    const res = await hrAPI.getPayslips({ employee_id: route.params.id })
+    const res = await hrAPI.getEmployeePayslips(String(route.params.id))
     payslips.value = res.data || []
   } catch { payslips.value = [] }
   finally { loadingPayslips.value = false }

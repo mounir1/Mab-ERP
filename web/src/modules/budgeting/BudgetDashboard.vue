@@ -162,7 +162,7 @@ interface DashData {
   by_year: Array<{ fiscal_year: number; allocated: number; spent: number; committed: number }>
   top_departments: Array<{ department_name: string; allocated: number; spent: number }>
   by_category: Array<{ category_name: string; budget_amount: number; actual_amount: number }>
-  recent_commitments: Array<Record<string, unknown>>
+  recent_commitments: Array<Record<string, any>>
   monthly_trend: Array<{ month: string; amount: number }>
 }
 

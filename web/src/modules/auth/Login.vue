@@ -26,6 +26,20 @@ async function handleLogin() {
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter') handleLogin()
 }
+
+const inputFocusStyle = 'background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.4); box-shadow: 0 0 0 3px rgba(99,102,241,0.12);'
+const inputActiveStyle = 'background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.5); color: #f1f5f9;'
+const inputDefaultStyle = 'background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #f1f5f9;'
+
+function focusField(e: FocusEvent) {
+  const el = e.target as HTMLInputElement | null
+  if (el) el.style.cssText += `; ${inputFocusStyle}`
+}
+
+function blurField(e: FocusEvent, active: boolean) {
+  const el = e.target as HTMLInputElement | null
+  if (el) el.style.cssText = active ? inputActiveStyle : inputDefaultStyle
+}
 </script>
 
 <template>
@@ -114,10 +128,8 @@ function handleKeydown(e: KeyboardEvent) {
                   :style="form.username
                     ? 'background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.5); box-shadow: 0 0 0 3px rgba(99,102,241,0.15);'
                     : ''"
-                  @focus="$event.target.style.cssText += '; background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.4); box-shadow: 0 0 0 3px rgba(99,102,241,0.12);'"
-                  @blur="$event.target.style.cssText = form.username
-                    ? 'background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.5); color: #f1f5f9;'
-                    : 'background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #f1f5f9;'"
+                  @focus="focusField"
+                  @blur="blurField($event, !!form.username)"
                   @keydown="handleKeydown"
                 />
               </div>
@@ -136,10 +148,8 @@ function handleKeydown(e: KeyboardEvent) {
                   placeholder="Enter your password"
                   class="w-full rounded-xl text-sm transition-all outline-none pl-10 pr-11 py-3"
                   style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #f1f5f9;"
-                  @focus="$event.target.style.cssText += '; background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.4); box-shadow: 0 0 0 3px rgba(99,102,241,0.12);'"
-                  @blur="$event.target.style.cssText = form.password
-                    ? 'background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.5); color: #f1f5f9;'
-                    : 'background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #f1f5f9;'"
+                  @focus="focusField"
+                  @blur="blurField($event, !!form.password)"
                   @keydown="handleKeydown"
                 />
                 <button

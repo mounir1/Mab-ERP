@@ -350,8 +350,8 @@ async function loadReport() {
   loading.value = true
   try {
     const [reportRes, ibsRes] = await Promise.all([
-      taxAPI.getTaxReport({ year: filterYear.value }),
-      taxAPI.getIBS({ year: filterYear.value }).catch(() => ({ data: {} }))
+      taxAPI.getTaxReport(filterYear.value),
+      taxAPI.getIBS(filterYear.value).catch(() => ({ data: {} }))
     ])
     report.value = reportRes.data || {}
     ibs.value = ibsRes.data || {}

@@ -181,7 +181,7 @@
             <td class="px-4 py-3">
               <div class="text-sm">
                 <span class="text-gray-900 dark:text-white font-medium">{{ fmtNum(proj.budget) }}</span>
-                <span v-if="proj.actual_cost > 0" class="text-xs text-gray-400 block">Spent: {{ fmtNum(proj.actual_cost) }}</span>
+                <span v-if="(proj.actual_cost ?? 0) > 0" class="text-xs text-gray-400 block">Spent: {{ fmtNum(proj.actual_cost ?? 0) }}</span>
               </div>
             </td>
             <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ fmtDate(proj.end_date) }}</td>

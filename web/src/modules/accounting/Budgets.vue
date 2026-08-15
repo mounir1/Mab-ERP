@@ -446,7 +446,7 @@ onMounted(load)
                     <span class="font-mono" :class="app.darkMode ? 'text-rose-300' : 'text-rose-600'">{{ line.account_code }}</span>
                     <span class="ml-1.5" :class="app.darkMode ? 'text-slate-300' : 'text-slate-700'">{{ line.account_name }}</span>
                   </td>
-                  <td v-for="(key, i) in MONTH_KEYS" :key="key" class="text-right px-2 py-2 font-mono"
+                  <td v-for="key in MONTH_KEYS" :key="key" class="text-right px-2 py-2 font-mono"
                       :class="app.darkMode ? 'text-slate-400' : 'text-slate-600'">
                     {{ fmt((line as any)[key]) }}
                   </td>
@@ -572,7 +572,7 @@ onMounted(load)
                             </option>
                           </select>
                         </td>
-                        <td v-for="(key, mi) in MONTH_KEYS" :key="key" class="px-1 py-1.5">
+                        <td v-for="key in MONTH_KEYS" :key="key" class="px-1 py-1.5">
                           <input type="number" v-model.number="(line as any)[key]" min="0"
                             class="w-16 h-7 px-1.5 rounded border text-right text-[11px] font-mono focus:outline-none"
                             :class="app.darkMode

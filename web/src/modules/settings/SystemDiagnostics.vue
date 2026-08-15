@@ -657,7 +657,7 @@ function viewLog(log: any) {
 
 async function resolveLog(id: string) {
   try {
-    await diagnosticsAPI.resolveLog(id, {})
+    await diagnosticsAPI.resolveLog(id)
     store.addToast('Log résolu', 'success')
     await Promise.all([loadLogs(), loadStats()])
   } catch (e: any) {
@@ -680,7 +680,7 @@ async function bulkResolve() {
   if (!selectedIds.value.length) return
   submitting.value = true
   try {
-    await diagnosticsAPI.bulkResolveLogs({ ids: selectedIds.value })
+    await diagnosticsAPI.bulkResolve(selectedIds.value)
     store.addToast(`${selectedIds.value.length} logs résolus`, 'success')
     selectedIds.value = []
     await Promise.all([loadLogs(), loadStats()])

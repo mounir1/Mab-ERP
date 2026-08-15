@@ -141,7 +141,7 @@ const groupedCommands = computed(() => {
                   {{ group }}
                 </div>
                 <button
-                  v-for="(item, idx) in items"
+                  v-for="item in items"
                   :key="item.label"
                   class="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left"
                   :class="filtered.indexOf(item) === selectedIndex ? 'bg-indigo-50 text-indigo-800' : 'text-slate-700 hover:bg-slate-50'"

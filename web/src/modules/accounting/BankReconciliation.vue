@@ -47,11 +47,13 @@ const statusConfig: Record<string, { label: string; color: string; bg: string; b
 }
 
 // ─── Computed ──────────────────────────────────────────────────────────────────
+const recStatus = (r: Reconciliation) => r.is_reconciled ? 'reconciled' : 'draft'
+
 const stats = computed(() => {
   const total       = recs.value.length
   const reconciled  = recs.value.filter(r => r.is_reconciled).length
-  const pending     = recs.value.filter(r => r.is_reconciled ? "Reconciled" : "Open" !== 'reconciled').length
-  const totalDiff   = recs.value.reduce((s, r) => s + Math.abs(Number(r.difference) ?? 0), 0)
+  const pending     = recs.value.filter(r => !r.is_reconciled).length
+  const totalDiff   = recs.value.reduce((s, r) => s + Math.abs(Number(r.difference || 0)), 0)
   return { total, reconciled, pending, totalDiff }
 })
 
@@ -60,7 +62,7 @@ const filtered = computed(() => {
   const q = search.value.toLowerCase()
   return recs.value.filter(r =>
     r.bank_account_id?.toLowerCase().includes(q) ||
-    r.is_reconciled ? "Reconciled" : "Open"?.toLowerCase().includes(q)
+    (r.is_reconciled ? 'Reconciled' : 'Open').toLowerCase().includes(q)
   )
 })
 
@@ -230,9 +232,9 @@ onMounted(load)
                 <div class="text-[11px] text-slate-500">{{ fmtDate(rec.period_date) }} — {{ fmtDate(rec.period_date) }}</div>
               </div>
             </div>
-            <span :class="['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border', statusConfig[rec.status]?.bg, statusConfig[rec.status]?.color, statusConfig[rec.status]?.border]">
-              <span class="w-1.5 h-1.5 rounded-full" :class="statusConfig[rec.status]?.dot" />
-              {{ statusConfig[rec.status]?.label ?? rec.status }}
+            <span :class="['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border', statusConfig[recStatus(rec)]?.bg, statusConfig[recStatus(rec)]?.color, statusConfig[recStatus(rec)]?.border]">
+              <span class="w-1.5 h-1.5 rounded-full" :class="statusConfig[recStatus(rec)]?.dot" />
+              {{ statusConfig[recStatus(rec)]?.label ?? recStatus(rec) }}
             </span>
           </div>
 

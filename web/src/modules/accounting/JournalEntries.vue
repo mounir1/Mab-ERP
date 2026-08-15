@@ -28,7 +28,7 @@ interface JournalEntry {
 }
 
 interface JournalLine {
-  id: string
+  id?: string
   account_id: string
   account_code: string
   account_name: string

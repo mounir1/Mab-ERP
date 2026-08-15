@@ -73,7 +73,7 @@ Findings already logged from the audit:
 - [x] `purchase_inventory.go:270` goods-receipt TODO (PO received quantities + stock movements)
 - [x] Rate limiting on `/api/auth/*`
 - [x] `npm audit` fixes (2 vulns) + replace deprecated `lucide-vue-next`
-- [ ] Tests: Go unit tests (handlers/db/migration runner), frontend type-check/lint as gates
+- [x] Tests: Go unit tests (handlers/db/migration runner), frontend type-check/lint as gates
 
 **Exit check:** `go vet ./...`, tests green, fresh migration run, auth reboot safe.
 

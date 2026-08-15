@@ -360,7 +360,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed as vueComputed, onMounted } from 'vue'
 import {
   ScrollText, Calendar, RefreshCw, Save, Loader2, X,
   Percent, TrendingUp, Users, Calculator, History,
@@ -378,7 +378,6 @@ const loading      = ref(true)
 const saving       = ref(false)
 const showSaveModal = ref(false)
 const submissionRef = ref('')
-const computed_data = ref<any>(null)
 const declarations  = ref<any[]>([])
 const existingDecl  = ref<any>(null)
 
@@ -409,12 +408,12 @@ const form = ref({
 
 const computed = ref<any>(null)
 
-const tapNetDue = computed(() => {
+const tapNetDue = vueComputed(() => {
   const raw = form.value.tap_base * form.value.tap_rate - form.value.tap_reduction
   return Math.max(0, raw)
 })
 
-const grandTotal = computed(() => {
+const grandTotal = vueComputed(() => {
   return (
     Math.max(0, form.value.tva_net_due) +
     tapNetDue.value +

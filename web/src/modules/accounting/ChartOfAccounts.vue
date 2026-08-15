@@ -17,6 +17,7 @@ interface Account {
   id: string
   code: string
   name: string
+  name_ar?: string
   type: string
   parent_id: string | null
   is_group: boolean
@@ -43,7 +44,7 @@ const sortDir     = ref<'asc' | 'desc'>('asc')
 const form = ref({
   code: '',
   name: '',
-  
+  name_ar: '',
   type: 'asset',
   parent_id: null as string | null,
   is_group: false,
@@ -136,13 +137,13 @@ async function load() {
 
 function openCreate() {
   editTarget.value = null
-  form.value = { code: '', name: '',  type: 'asset', parent_id: null, is_group: false, is_reconcilable: false, currency: 'DZD' }
+  form.value = { code: '', name: '', name_ar: '', type: 'asset', parent_id: null, is_group: false, is_reconcilable: false, currency: 'DZD' }
   showModal.value = true
 }
 
 function openEdit(a: Account) {
   editTarget.value = a
-  form.value = { code: a.code, name: a.name,  type: a.type, parent_id: a.parent_id, is_group: a.is_group, is_reconcilable: a.is_reconcilable, currency: a.currency }
+  form.value = { code: a.code, name: a.name, name_ar: a.name_ar ?? '', type: a.type, parent_id: a.parent_id, is_group: a.is_group, is_reconcilable: a.is_reconcilable, currency: a.currency }
   showModal.value = true
 }
 
@@ -170,7 +171,8 @@ async function save() {
 }
 
 function toggleRow(id: string) {
-  expandedRows.value.has(id) ? expandedRows.value.delete(id) : expandedRows.value.add(id)
+  if (expandedRows.value.has(id)) expandedRows.value.delete(id)
+  else expandedRows.value.add(id)
   expandedRows.value = new Set(expandedRows.value)
 }
 
@@ -552,7 +554,6 @@ onMounted(load)
 <!-- ── Recursive tree row component ──────────────────────────────────────────── -->
 <script lang="ts">
 import { defineComponent, h, type PropType } from 'vue'
-import { ChevronRight, ChevronDown, Pencil, Check, Scale } from '@lucide/vue'
 
 const TreeAccountRow = defineComponent({
   name: 'TreeAccountRow',

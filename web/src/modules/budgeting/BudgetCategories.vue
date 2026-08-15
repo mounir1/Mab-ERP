@@ -140,7 +140,7 @@ import { budgetingAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 
 const app = useAppStore()
-const categories = ref<Record<string, unknown>[]>([])
+const categories = ref<Record<string, any>[]>([])
 const search = ref('')
 const showModal = ref(false)
 const saving = ref(false)
