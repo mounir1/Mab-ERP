@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Nexus ERP — Unified Build Script
+# Mab ERP — Unified Build Script
 # Usage:
 #   ./scripts/build.sh            # Linux binary
 #   ./scripts/build.sh --windows  # Windows .exe
@@ -22,7 +22,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 WEB_DIR="$PROJECT_ROOT/web"
 DIST_DIR="$WEB_DIR/dist"
 
-VERSION="${VERSION:-1.0.0}"
+VERSION="${VERSION:-1.1.0}"
 BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 GIT_COMMIT=$(git -C "$PROJECT_ROOT" rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
@@ -83,18 +83,18 @@ LD_FLAGS="-s -w \
 if [ "$BUILD_LINUX" = true ]; then
     log_info "Compiling Linux binary..."
     GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
-        go build -ldflags "$LD_FLAGS" -o nexus-erp .
-    chmod +x nexus-erp
-    LINUX_SIZE=$(du -sh nexus-erp | cut -f1)
-    log_success "Linux binary: nexus-erp (${LINUX_SIZE})"
+        go build -ldflags "$LD_FLAGS" -o mab-erp .
+    chmod +x mab-erp
+    LINUX_SIZE=$(du -sh mab-erp | cut -f1)
+    log_success "Linux binary: mab-erp (${LINUX_SIZE})"
 fi
 
 if [ "$BUILD_WINDOWS" = true ]; then
     log_info "Compiling Windows binary..."
     GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
-        go build -ldflags "$LD_FLAGS" -o nexus-erp.exe .
-    WIN_SIZE=$(du -sh nexus-erp.exe | cut -f1)
-    log_success "Windows binary: nexus-erp.exe (${WIN_SIZE})"
+        go build -ldflags "$LD_FLAGS" -o mab-erp.exe .
+    WIN_SIZE=$(du -sh mab-erp.exe | cut -f1)
+    log_success "Windows binary: mab-erp.exe (${WIN_SIZE})"
 fi
 
 # ─── Step 3: Package ZIP ──────────────────────────────────────────────────────
@@ -102,12 +102,12 @@ if [ "$BUILD_ZIP" = true ]; then
     log_info "Step 3/3 — Packaging distribution ZIP..."
     cd "$PROJECT_ROOT"
 
-    ZIP_NAME="nexus-erp-v${VERSION}-$(date +%Y%m%d)"
+    ZIP_NAME="mab-erp-v${VERSION}-$(date +%Y%m%d)"
 
     # Always package whatever binaries were built
     FILES_TO_ZIP=()
-    [ -f "nexus-erp" ]     && FILES_TO_ZIP+=("nexus-erp")
-    [ -f "nexus-erp.exe" ] && FILES_TO_ZIP+=("nexus-erp.exe")
+    [ -f "mab-erp" ]     && FILES_TO_ZIP+=("mab-erp")
+    [ -f "mab-erp.exe" ] && FILES_TO_ZIP+=("mab-erp.exe")
     FILES_TO_ZIP+=(".env.example" "docker-compose.yml" "README.md")
 
     if [ ${#FILES_TO_ZIP[@]} -eq 0 ]; then
@@ -126,10 +126,10 @@ fi
 echo ""
 log_success "====== BUILD COMPLETE ======"
 echo ""
-echo "To run Nexus ERP:"
+echo "To run Mab ERP:"
 echo "  1. Set up PostgreSQL and update DATABASE_URL"
 echo "  2. Copy .env.example to .env and configure"
-echo "  3. ./nexus-erp"
+echo "  3. ./mab-erp"
 echo "  4. Open http://localhost:8080"
 echo "  5. Login: admin / Admin@123456"
 echo ""

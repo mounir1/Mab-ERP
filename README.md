@@ -1,10 +1,10 @@
-
-# Nexus ERP
-
-
+﻿
+# Mab ERP
 
 
-![Nexus ERP Demo](asset/Nexus-ERP.gif)
+
+
+![Mab ERP Demo](asset/Mab-ERP.gif)
 
 
 
@@ -62,8 +62,8 @@ https://golang.org/dl/go1.15.1.windows-amd64.msi
 
 ```bash
 # 1. Extract the zip
-unzip nexus-erp-v1.0.0.zip
-cd nexus-erp-v1.0.0
+unzip mab-erp-v1.1.0.zip
+cd mab-erp-v1.1.0
 ```
 <img width="370" height="29" alt="image" src="https://github.com/user-attachments/assets/47a51a62-b4bd-465a-b31c-7059a0551771" />
 
@@ -78,13 +78,13 @@ cp .env.example .env
 # Windows: Start PostgreSQL service from Services
 
 # 4. Create the database
-psql -U postgres -c "CREATE DATABASE nexus_erp;"
-psql -U postgres -c "CREATE USER nexus WITH PASSWORD 'nexus_password';"
-psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE nexus_erp TO nexus;"
+psql -U postgres -c "CREATE DATABASE mab_erp;"
+psql -U postgres -c "CREATE USER mab WITH PASSWORD 'mab_password';"
+psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE mab_erp TO mab;"
 
-# 5. Run Nexus ERP (migrations run automatically on first start)
-./nexus-erp          # Linux/macOS
-nexus-erp.exe        # Windows
+# 5. Run Mab ERP (migrations run automatically on first start)
+./mab-erp          # Linux/macOS
+mab-erp.exe        # Windows
 ```
 <img width="1465" height="468" alt="image" src="https://github.com/user-attachments/assets/67e363ab-51bc-404e-8c15-8fb0480bdbe3" />
 
@@ -105,29 +105,29 @@ nexus-erp.exe        # Windows
 
 ```bash
 # Clone or extract project
-git clone <repo-url> nexus-erp
-cd nexus-erp
+git clone <repo-url> mab-erp
+cd mab-erp
 
 # Start PostgreSQL + App
 docker compose up -d
 
 # View logs
-docker compose logs -f nexus-erp
+docker compose logs -f mab-erp
 
 # Open: http://localhost:8080
 # Login: admin / Admin@123456
 
 # (Optional) Start with pgAdmin database manager
 docker compose --profile tools up -d
-# pgAdmin: http://localhost:5050 (admin@nexus-erp.local / pgadmin_password)
+# pgAdmin: http://localhost:5050 (admin@mab-erp.local / pgadmin_password)
 ```
 
 ### Option 3 — Build from Source
 
 ```bash
 # Clone project
-git clone <repo-url> nexus-erp
-cd nexus-erp
+git clone <repo-url> mab-erp
+cd mab-erp
 
 # Build Linux binary
 ./scripts/build.sh
@@ -139,7 +139,7 @@ cd nexus-erp
 ./scripts/build.sh --all --zip
 
 # Run
-./nexus-erp
+./mab-erp
 ```
 
 ---
@@ -162,7 +162,7 @@ All configuration is via environment variables (`.env` file):
 
 ```env
 # Required
-DATABASE_URL=postgres://nexus:password@localhost:5432/nexus_erp?sslmode=disable
+DATABASE_URL=postgres://mab:password@localhost:5432/mab_erp?sslmode=disable
 JWT_SECRET=your-secret-key-minimum-32-characters
 
 # Optional
@@ -178,7 +178,7 @@ See `.env.example` for the complete list.
 ## 🏗️ Architecture
 
 ```
-nexus-erp/
+mab-erp/
 ├── main.go                          # Entry point + go:embed + all API routes
 ├── go.mod / go.sum                  # Go dependencies
 ├── Dockerfile                       # Multi-stage Docker build
@@ -243,13 +243,13 @@ nexus-erp/
 ---
 
 
-Based on the features of Nexus ERP from the provided GitHub repository and other major global ERP solutions, here is a detailed comparison table in English.
+Based on the features of Mab ERP from the provided GitHub repository and other major global ERP solutions, here is a detailed comparison table in English.
 
-### Nexus ERP vs. Global ERP Systems: A Feature Comparison
+### Mab ERP vs. Global ERP Systems: A Feature Comparison
 
-This table compares **Nexus ERP** (based on its v1.0.0 release) against five leading global ERP solutions: **SAP S/4HANA** , **Oracle Fusion Cloud ERP** , **Microsoft Dynamics 365** , **Odoo** , and **ERPNext** .
+This table compares **Mab ERP** (based on its v1.1.0 release) against five leading global ERP solutions: **SAP S/4HANA** , **Oracle Fusion Cloud ERP** , **Microsoft Dynamics 365** , **Odoo** , and **ERPNext** .
 
-| Feature / Aspect | **Nexus ERP** | **SAP S/4HANA** | **Oracle Cloud ERP** | **Microsoft Dynamics 365** | **Odoo** | **ERPNext** |
+| Feature / Aspect | **Mab ERP** | **SAP S/4HANA** | **Oracle Cloud ERP** | **Microsoft Dynamics 365** | **Odoo** | **ERPNext** |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Target Market & Philosophy** | Algerian businesses seeking a cost-effective, compliant, and easy-to-deploy solution. | Large enterprises needing a comprehensive, integrated, and highly customizable global platform . | Large enterprises focused on cloud-based, AI-driven financial management and a unified data model . | Mid-sized to large organizations looking for a scalable, AI-enhanced suite deeply integrated with Microsoft tools . | Small to medium-sized businesses wanting a modern, modular, and cost-effective open-source solution . | Small to large businesses seeking an affordable, open-source, and highly flexible all-in-one system . |
 | **Deployment & Architecture** | **Single Binary** (Go + Vue 3) – Extremely simple. Requires only PostgreSQL. | Complex, multi-tier on-premise or cloud. Requires significant infrastructure and expertise . | Cloud-native (SaaS) or on-premise. Requires substantial infrastructure and specialized knowledge . | Cloud (SaaS) or on-premise. Leverages Azure. Integrates deeply with Microsoft ecosystem . | On-premise, Cloud (SaaS), or custom. Modular architecture built with Python/JavaScript . | On-premise or Cloud (SaaS). Built on the Frappe framework (Python/JS) . |
@@ -263,11 +263,11 @@ This table compares **Nexus ERP** (based on its v1.0.0 release) against five lea
 
 ### Summary
 
-- **Nexus ERP** is a highly specialized, modern, and cost-effective solution that is **uniquely positioned for the Algerian market**. Its key strength is its **native compliance** with local legal and fiscal requirements (SCF, IRG, CNAS, G50/G29)  combined with a **simple, modern, and powerful** technical architecture (single binary, Go+Vue).
+- **Mab ERP** is a highly specialized, modern, and cost-effective solution that is **uniquely positioned for the Algerian market**. Its key strength is its **native compliance** with local legal and fiscal requirements (SCF, IRG, CNAS, G50/G29)  combined with a **simple, modern, and powerful** technical architecture (single binary, Go+Vue).
 - **SAP, Oracle, and Microsoft** are "global giants" designed for large enterprises. They offer immense depth and scale but come with very high costs and complexity. They are not tailored for Algeria out-of-the-box and would require expensive customizations .
-- **Odoo and ERPNext** are direct open-source competitors. They offer a similar cost benefit and modularity. However, Nexus ERP is arguably more modern in its architecture (single binary vs. traditional application stacks) and has a specific, built-in focus on the **Algerian market** that Odoo and ERPNext lack without significant custom development .
+- **Odoo and ERPNext** are direct open-source competitors. They offer a similar cost benefit and modularity. However, Mab ERP is arguably more modern in its architecture (single binary vs. traditional application stacks) and has a specific, built-in focus on the **Algerian market** that Odoo and ERPNext lack without significant custom development .
 
-In conclusion, **Nexus ERP competes by offering a "best of both worlds" proposition**: the affordability and openness of solutions like Odoo, with a state-of-the-art, simple-to-deploy architecture and immediate, out-of-the-box compliance for **Algerian businesses** .
+In conclusion, **Mab ERP competes by offering a "best of both worlds" proposition**: the affordability and openness of solutions like Odoo, with a state-of-the-art, simple-to-deploy architecture and immediate, out-of-the-box compliance for **Algerian businesses** .
 
 ---
 
@@ -326,27 +326,27 @@ All API endpoints are under `/api/` prefix. Authentication via `Authorization: B
 ./scripts/build.sh
 
 # 2. Create system user
-sudo useradd -r -s /bin/false nexus-erp
+sudo useradd -r -s /bin/false mab-erp
 
 # 3. Copy binary
-sudo cp nexus-erp /usr/local/bin/
-sudo chmod +x /usr/local/bin/nexus-erp
+sudo cp mab-erp /usr/local/bin/
+sudo chmod +x /usr/local/bin/mab-erp
 
 # 4. Create config
-sudo mkdir -p /etc/nexus-erp
-sudo cp .env.example /etc/nexus-erp/.env
-sudo nano /etc/nexus-erp/.env  # Edit settings
+sudo mkdir -p /etc/mab-erp
+sudo cp .env.example /etc/mab-erp/.env
+sudo nano /etc/mab-erp/.env  # Edit settings
 
 # 5. Create systemd service
-sudo tee /etc/systemd/system/nexus-erp.service > /dev/null <<EOF
+sudo tee /etc/systemd/system/mab-erp.service > /dev/null <<EOF
 [Unit]
-Description=Nexus ERP
+Description=Mab ERP
 After=network.target postgresql.service
 
 [Service]
-User=nexus-erp
-EnvironmentFile=/etc/nexus-erp/.env
-ExecStart=/usr/local/bin/nexus-erp
+User=mab-erp
+EnvironmentFile=/etc/mab-erp/.env
+ExecStart=/usr/local/bin/mab-erp
 Restart=always
 RestartSec=5
 
@@ -356,9 +356,9 @@ EOF
 
 # 6. Enable and start
 sudo systemctl daemon-reload
-sudo systemctl enable nexus-erp
-sudo systemctl start nexus-erp
-sudo systemctl status nexus-erp
+sudo systemctl enable mab-erp
+sudo systemctl start mab-erp
+sudo systemctl status mab-erp
 ```
 
 ### Windows Server
@@ -367,12 +367,12 @@ sudo systemctl status nexus-erp
 # 1. Build .exe
 ./scripts/build.sh --windows
 
-# 2. Copy nexus-erp.exe to C:\NexusERP\
-# 3. Copy .env.example to C:\NexusERP\.env and configure
+# 2. Copy mab-erp.exe to C:\MabERP\
+# 3. Copy .env.example to C:\MabERP\.env and configure
 # 4. Register as Windows Service (using NSSM)
-nssm install NexusERP "C:\NexusERP\nexus-erp.exe"
-nssm set NexusERP AppDirectory "C:\NexusERP"
-nssm start NexusERP
+nssm install MabERP "C:\MabERP\mab-erp.exe"
+nssm set MabERP AppDirectory "C:\MabERP"
+nssm start MabERP
 ```
 
 ### Nginx Reverse Proxy (optional)
@@ -410,12 +410,12 @@ server {
 
 ```bash
 # Terminal 1: Go backend (with hot reload using air)
-cd nexus-erp
+cd mab-erp
 go install github.com/air-verse/air@latest
 air
 
 # Terminal 2: Vue frontend (Vite dev server with HMR)
-cd nexus-erp/web
+cd mab-erp/web
 npm install
 npm run dev
 # → http://localhost:5173 (proxies /api to :8080)
@@ -431,7 +431,7 @@ cd web && npm run lint
 
 ## 📋 Changelog
 
-### v1.0.0 (2026-08-08)
+### v1.1.0 (2026-08-08)
 - Initial release
 - Full Algerian SCF/IRG/CNAS compliance
 - 14 modules: Accounting, HR/Payroll, Sales/CRM, Purchase, Inventory, Manufacturing, Projects, Treasury, Tax, Workflow, Reports, Dashboard, Settings
@@ -444,7 +444,7 @@ cd web && npm run lint
 
 ## 📄 License
 
-Copyright © 2026 Nexus ERP. All rights reserved.
+Copyright © 2026 Mab ERP. All rights reserved.
 
 ---
 

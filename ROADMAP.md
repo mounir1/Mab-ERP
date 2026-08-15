@@ -3,7 +3,7 @@
 Rebrand of **Nexus ERP → Mab ERP** (full internal rename), hardening, testing, assets,
 credits, and production deployment behind an **Apache** web server.
 
-Status: 📋 Planned
+Status: 🚧 In Progress — Phase 1 (rebrand) done
 Current baseline: backend + DB + Vite dev server running locally (migrations fixed, all 20 applied).
 
 ---
@@ -33,29 +33,29 @@ Name token mapping (used everywhere, all the following files):
 | `nexus` (user/tenant/keys) | `mab` |
 
 ### 1A. Backend / Go
-- [ ] `go.mod` module path + all `nexus-erp/internal/...` import paths → `mab-erp/internal/...`
-- [ ] `main.go` startup log line, `//go:embed` unchanged
-- [ ] `db.go` default `DB_NAME` `nexus_erp` → `mab_erp`
-- [ ] `cmd/dbsetup/main.go` DB/user names
-- [ ] SQL seeds in `0001_init_schema.sql`: tenant code `'NEXUS'`→`'MAB'`, names, `admin@nexus-erp.local` → `admin@mab-erp.local`; update all `-- Nexus ERP - ...` migration header comments
+- [x] `go.mod` module path + all `nexus-erp/internal/...` import paths → `mab-erp/internal/...`
+- [x] `main.go` startup log line, `//go:embed` unchanged
+- [x] `db.go` default `DB_NAME` `nexus_erp` → `mab_erp`
+- [x] `cmd/dbsetup/main.go` DB/user names
+- [x] SQL seeds in `0001_init_schema.sql`: tenant code `'NEXUS'`→`'MAB'`, names, `admin@nexus-erp.local` → `admin@mab-erp.local`; update all `-- Nexus ERP - ...` migration header comments
 
 ### 1B. Frontend / Vue
-- [ ] `web/index.html` + root `index.html`: `<title>`, meta description, favicon (new logo)
-- [ ] `Sidebar.vue`, `Login.vue`, `AppBar.vue`, `StatusBar.vue` brand text, tagline, footer
-- [ ] `App.vue` root id, `router/index.ts` document.title template
-- [ ] `stores/auth.ts` localStorage keys `nexus_*` → `mab_*`; `stores/app.ts` `nexus-theme` → `mab-theme`
-- [ ] `package.json` (`web/` + root) name/description
+- [x] `web/index.html` + root `index.html`: `<title>`, meta description, favicon (new logo)
+- [x] `Sidebar.vue`, `Login.vue`, `AppBar.vue`, `StatusBar.vue` brand text, tagline, footer
+- [x] `App.vue` root id, `router/index.ts` document.title template
+- [x] `stores/auth.ts` localStorage keys `nexus_*` → `mab_*`; `stores/app.ts` `nexus-theme` → `mab-theme`
+- [x] `package.json` (`web/` + root) name/description
 
 ### 1C. Build / Deploy / Docs
-- [ ] `docker-compose.yml`: service/container/volume/network names, `nexus_erp` DB, `nexus` user, pgadmin email
-- [ ] `Dockerfile`: labels, output binary `/nexus-erp` → `/mab-erp`
-- [ ] `env.example` + `.env`: `nexus_erp`, `S3_BUCKET=nexus-erp-files`, `SMTP_FROM`, `VITE_APP_NAME`
-- [ ] `scripts/build.sh` output/zip names
-- [ ] `README.md` full pass; `asset/Nexus-ERP.gif` → `asset/Mab-ERP.gif`
+- [x] `docker-compose.yml`: service/container/volume/network names, `nexus_erp` DB, `nexus` user, pgadmin email
+- [x] `Dockerfile`: labels, output binary `/nexus-erp` → `/mab-erp`
+- [x] `env.example` + `.env`: `nexus_erp`, `S3_BUCKET=nexus-erp-files`, `SMTP_FROM`, `VITE_APP_NAME`
+- [x] `scripts/build.sh` output/zip names
+- [x] `README.md` full pass; `asset/Nexus-ERP.gif` → `asset/Mab-ERP.gif`
 
 ### 1D. New branding assets (Phase 3 deliverables, wired here)
 - [ ] Proper logo (SVG + favicon + inline mark) — replace letter blocks
-- [ ] Unify version strings (`v1.0.0` vs `v1.1.0` inconsistency)
+- [x] Unify version strings (`v1.0.0` vs `v1.1.0` inconsistency)
 
 **Exit check:** `rg -in "nexus" --glob '!web/dist' --glob '!node_modules'` returns only LICENSE/attribution hits; full rebuild works.
 

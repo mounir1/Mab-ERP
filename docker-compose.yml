@@ -1,35 +1,35 @@
 version: '3.9'
 
 services:
-  # ─── PostgreSQL Database ─────────────────────────────────────────────────
+  # --- PostgreSQL Database ---------------------------------------------------
   postgres:
     image: postgres:16-alpine
-    container_name: nexus-erp-db
+    container_name: mab-erp-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB:       nexus_erp
-      POSTGRES_USER:     nexus
-      POSTGRES_PASSWORD: nexus_password
+      POSTGRES_DB:       mab_erp
+      POSTGRES_USER:     mab
+      POSTGRES_PASSWORD: mab_password
       PGDATA:            /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nexus -d nexus_erp"]
+      test: ["CMD-SHELL", "pg_isready -U mab -d mab_erp"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 20s
     networks:
-      - nexus-net
+      - mab-net
 
-  # ─── Nexus ERP Application ───────────────────────────────────────────────
-  nexus-erp:
+  # --- Mab ERP Application ---------------------------------------------------
+  mab-erp:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nexus-erp-app
+    container_name: mab-erp-app
     restart: unless-stopped
     depends_on:
       postgres:
@@ -37,7 +37,7 @@ services:
     environment:
       APP_ENV:      production
       APP_PORT:     "8080"
-      DATABASE_URL: postgres://nexus:nexus_password@postgres:5432/nexus_erp?sslmode=disable
+      DATABASE_URL: postgres://mab:mab_password@postgres:5432/mab_erp?sslmode=disable
       JWT_SECRET:   "CHANGE_ME_IN_PRODUCTION_USE_RANDOM_64_CHAR_STRING"
     ports:
       - "8080:8080"
@@ -48,16 +48,16 @@ services:
       retries: 3
       start_period: 15s
     networks:
-      - nexus-net
+      - mab-net
 
-  # ─── Optional: pgAdmin for DB management ─────────────────────────────────
+  # --- Optional: pgAdmin for DB management -----------------------------------
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: nexus-erp-pgadmin
+    container_name: mab-erp-pgadmin
     restart: unless-stopped
     profiles: ["tools"]          # Only starts with: docker compose --profile tools up
     environment:
-      PGADMIN_DEFAULT_EMAIL:    admin@nexus-erp.local
+      PGADMIN_DEFAULT_EMAIL:    admin@mab-erp.local
       PGADMIN_DEFAULT_PASSWORD: pgadmin_password
       PGADMIN_CONFIG_SERVER_MODE: "False"
     ports:
@@ -67,15 +67,15 @@ services:
     depends_on:
       - postgres
     networks:
-      - nexus-net
+      - mab-net
 
 volumes:
   postgres_data:
-    name: nexus-erp-postgres-data
+    name: mab-erp-postgres-data
   pgadmin_data:
-    name: nexus-erp-pgadmin-data
+    name: mab-erp-pgadmin-data
 
 networks:
-  nexus-net:
-    name: nexus-erp-network
+  mab-net:
+    name: mab-erp-network
     driver: bridge

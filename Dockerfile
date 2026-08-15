@@ -1,5 +1,5 @@
 # =============================================================================
-# Nexus ERP — Multi-stage Dockerfile
+# Mab ERP — Multi-stage Dockerfile
 # Stage 1: Build Vue frontend
 # Stage 2: Build Go binary with embedded frontend
 # Stage 3: Minimal runtime image
@@ -34,7 +34,7 @@ COPY --from=frontend-builder /app/web/dist ./web/dist
 
 # Build the binary
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build -ldflags="-s -w" -o nexus-erp .
+    go build -ldflags="-s -w" -o mab-erp .
 
 # ─── Stage 3: Minimal runtime ─────────────────────────────────────────────────
 FROM scratch
@@ -44,8 +44,8 @@ COPY --from=go-builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=go-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # Copy the binary
-COPY --from=go-builder /app/nexus-erp /nexus-erp
+COPY --from=go-builder /app/mab-erp /mab-erp
 
 EXPOSE 8080
 
-ENTRYPOINT ["/nexus-erp"]
+ENTRYPOINT ["/mab-erp"]
