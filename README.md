@@ -9,9 +9,6 @@
 
 
 
-```markdown
-
-
 **Ultra-Professional Algerian ERP System — Single Binary Deployment**
 
 > A complete Enterprise Resource Planning solution built with Go + Vue 3, packaged as a single executable with zero external dependencies (except PostgreSQL).
@@ -444,9 +441,36 @@ cd web && npm run lint
 
 ## 📄 License
 
-Copyright © 2026 Mab ERP. All rights reserved.
+Mab ERP is released under the **MIT License**.
+
+Copyright © 2026 **Brahim TIM**
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the condition that the above copyright notice and this permission
+notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+---
+
+## 🙌 Credits
+
+- **Author & lead developer:** Brahim TIM
+- **Origin:** Mab ERP is a continuation of the **Nexus ERP** project, rebranded and rebuilt for
+  Algerian enterprise requirements (SCF chart of accounts, IRG payroll, CNAS contributions, G29/G50).
+- **Contributors:** Brahim TIM · Nexus ERP community
+- **Special thanks:** the open-source ecosystem that made this possible — Go, Vue 3, Tailwind CSS,
+  PostgreSQL, and every dependency powering the stack.
+
+See the in-app **Settings → About** screen for the same credits.
 
 ---
 
 > Built with ❤️ for Algerian businesses.
-```

@@ -535,6 +535,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/modules/settings/AuditLog.vue'),
     meta: { title: 'Audit Log', icon: 'ScrollText', group: 'System' }
   },
+  {
+    path: '/settings/about',
+    name: 'About',
+    component: () => import('@/modules/settings/About.vue'),
+    meta: { title: 'About', icon: 'Info', group: 'System' }
+  },
 
   // ── Maintenance ───────────────────────────────────────────────────────────
   {

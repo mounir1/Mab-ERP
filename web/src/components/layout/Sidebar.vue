@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import AppLogo from '@/components/ui/AppLogo.vue'
 import {
   LayoutDashboard,
   Calculator,
@@ -61,6 +62,7 @@ import {
   FileBarChart,
   ScrollText,
   Activity,
+  Info,
   Monitor,
   Wrench,
   Shield,
@@ -288,6 +290,7 @@ const navItems: NavItem[] = [
     { label: 'Taxes',              icon: Percent,    to: '/settings/taxes' },
     { label: 'Audit Log',          icon: FileText,   to: '/settings/audit-log' },
     { label: 'System Diagnostics', icon: Activity,   to: '/settings/diagnostics' },
+    { label: 'About',              icon: Info,       to: '/settings/about' },
   ]},
 ]
 
@@ -319,14 +322,12 @@ function isGroupExpanded(item: NavItem): boolean {
     ]"
   >
     <!-- Logo / Brand -->
-    <div class="flex items-center gap-3 px-4 py-4 border-b border-slate-800 min-h-[60px]">
-      <div class="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
-        M
+<div class="flex items-center gap-3 px-4 py-4 border-b border-slate-800 min-h-[60px]">
+        <AppLogo :size="32" />
+        <transition name="fade-text">
+          <span v-if="!collapsed" class="font-bold text-white text-sm truncate">Mab ERP</span>
+        </transition>
       </div>
-      <transition name="fade-text">
-        <span v-if="!collapsed" class="font-bold text-white text-sm truncate">Mab ERP</span>
-      </transition>
-    </div>
 
     <!-- Navigation -->
     <nav class="flex-1 overflow-y-auto py-2 scrollbar-thin">

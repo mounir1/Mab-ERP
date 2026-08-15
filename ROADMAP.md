@@ -54,7 +54,7 @@ Name token mapping (used everywhere, all the following files):
 - [x] `README.md` full pass; `asset/Nexus-ERP.gif` → `asset/Mab-ERP.gif`
 
 ### 1D. New branding assets (Phase 3 deliverables, wired here)
-- [ ] Proper logo (SVG + favicon + inline mark) — replace letter blocks
+- [x] Proper logo (SVG + favicon + inline mark) — replace letter blocks
 - [x] Unify version strings (`v1.0.0` vs `v1.1.0` inconsistency)
 
 **Exit check:** `rg -in "nexus" --glob '!web/dist' --glob '!node_modules'` returns only LICENSE/attribution hits; full rebuild works.
@@ -79,10 +79,10 @@ Findings already logged from the audit:
 
 ## Phase 3 — Assets, Credits & Polish
 
-- [ ] Design logo (SVG) + favicon + optional demo GIF `asset/Mab-ERP.gif`
-- [ ] Login page brand polish (hero, tagline, footer alignment)
-- [ ] **Credits section** in README + settings/about screen (author: Brahim TIM, contributors, the original Nexus ERP lineage, licensing/attribution)
-- [ ] LICENSE file vs README "All rights reserved" conflict — reconcile (MIT)
+- [x] Design logo (SVG) + favicon + optional demo GIF `asset/Mab-ERP.gif`
+- [x] Login page brand polish (hero, tagline, footer alignment)
+- [x] **Credits section** in README + settings/about screen (author: Brahim TIM, contributors, the original Nexus ERP lineage, licensing/attribution)
+- [x] LICENSE file vs README "All rights reserved" conflict — reconcile (MIT)
 
 ## Phase 4 — Production Deployment (Apache server)
 

@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import AppLogo from '@/components/ui/AppLogo.vue'
 import { Eye, EyeOff, LogIn, Loader2, AlertCircle, Lock, User } from '@lucide/vue'
 
 const router = useRouter()
@@ -80,7 +81,7 @@ function blurField(e: FocusEvent, active: boolean) {
             <!-- Logo -->
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
               style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-              <span class="text-white font-black text-2xl tracking-tight">M</span>
+              <AppLogo :size="40" />
             </div>
             <div>
               <h1 class="text-white font-bold text-xl tracking-tight">Mab ERP</h1>
@@ -231,12 +232,15 @@ function blurField(e: FocusEvent, active: boolean) {
       </div>
 
       <!-- Footer -->
-      <div class="text-center mt-5 flex items-center justify-center gap-3">
-        <div class="h-px flex-1" style="background: rgba(255,255,255,0.08);"></div>
-        <p class="text-xs flex-shrink-0" style="color: #475569;">
-          Mab ERP v1.1.0 &copy; {{ new Date().getFullYear() }}
-        </p>
-        <div class="h-px flex-1" style="background: rgba(255,255,255,0.08);"></div>
+      <div class="text-center mt-5">
+        <div class="flex items-center justify-center gap-3">
+          <div class="h-px flex-1" style="background: rgba(255,255,255,0.08);"></div>
+          <p class="text-xs flex-shrink-0" style="color: #475569;">
+            Mab ERP v1.1.0 &copy; {{ new Date().getFullYear() }}
+          </p>
+          <div class="h-px flex-1" style="background: rgba(255,255,255,0.08);"></div>
+        </div>
+        <p class="text-xs mt-2" style="color: #475569;">Built with Go, Vue 3 &amp; PostgreSQL — for Algerian businesses.</p>
       </div>
     </div>
   </div>
