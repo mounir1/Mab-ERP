@@ -13,8 +13,7 @@ const app = useAppStore()
 // ─── types ────────────────────────────────────────────────────────────────────
 interface HistoryRecord {
   id: string
-  order_id?: string
-  order_number?: string
+  title?: string
   equipment_id?: string
   equipment_name?: string
   equipment_code?: string
@@ -23,6 +22,7 @@ interface HistoryRecord {
   technician_name?: string
   work_performed?: string
   findings?: string
+  duration_hours?: number
   downtime_hours?: number
   labor_cost?: number
   parts_cost?: number
@@ -37,6 +37,11 @@ const history    = ref<HistoryRecord[]>([])
 const loading    = ref(false)
 const search     = ref('')
 const typeFilter = ref('all')
+
+const total        = ref(0)
+const totalCost    = ref(0)
+const totalHours   = ref(0)
+const totalDowntime = ref(0)
 
 const page    = ref(1)
 const perPage = 25
@@ -57,7 +62,7 @@ const filtered = computed(() => {
     const q = search.value.toLowerCase()
     list = list.filter(h =>
       (h.equipment_name || '').toLowerCase().includes(q) ||
-      (h.order_number || '').toLowerCase().includes(q) ||
+      (h.title || '').toLowerCase().includes(q) ||
       (h.technician_name || '').toLowerCase().includes(q) ||
       (h.work_performed || '').toLowerCase().includes(q)
     )
@@ -72,15 +77,12 @@ const paginated   = computed(() => filtered.value.slice((page.value-1)*perPage, 
 const totalPages  = computed(() => Math.max(1, Math.ceil(filtered.value.length / perPage)))
 
 const kpis = computed(() => {
-  const all = history.value
-  const totalCost    = all.reduce((s,h) => s + (h.total_cost || 0), 0)
-  const totalHours   = all.reduce((s,h) => s + (h.downtime_hours || 0), 0)
-  const corrective   = all.filter(h => h.history_type === 'corrective').length
-  const preventive   = all.filter(h => h.history_type === 'preventive').length
+  const corrective   = history.value.filter(h => h.history_type === 'corrective').length
+  const preventive   = history.value.filter(h => h.history_type === 'preventive').length
   return [
-    { label: 'Total Records',  value: all.length,    sub: 'all time',        icon: History,      color: 'text-violet-400', bg: 'bg-violet-500/10' },
-    { label: 'Total Cost',     value: totalCost,      sub: 'all maintenance', icon: DollarSign,   color: 'text-teal-400',   bg: 'bg-teal-500/10',   money: true },
-    { label: 'Downtime Hours', value: totalHours,     sub: 'h total',         icon: Clock,        color: 'text-amber-400',  bg: 'bg-amber-500/10',  hours: true },
+    { label: 'Total Records',  value: total.value,  sub: 'all time',        icon: History,      color: 'text-violet-400', bg: 'bg-violet-500/10' },
+    { label: 'Total Cost',     value: totalCost.value, sub: 'all maintenance', icon: DollarSign, color: 'text-teal-400',   bg: 'bg-teal-500/10',   money: true },
+    { label: 'Downtime Hours', value: totalDowntime.value, sub: 'h total', icon: Clock,        color: 'text-amber-400',  bg: 'bg-amber-500/10',  hours: true },
     { label: 'Corrective',     value: corrective,     sub: 'unplanned',       icon: Wrench,       color: 'text-rose-400',   bg: 'bg-rose-500/10' },
     { label: 'Preventive',     value: preventive,     sub: 'scheduled',       icon: CheckCircle,  color: 'text-emerald-400',bg: 'bg-emerald-500/10' },
   ]
@@ -127,11 +129,18 @@ const load = async () => {
   loading.value = true
   try {
     const params: Record<string,string> = {}
-    if (typeFilter.value !== 'all') params.type = typeFilter.value
+    if (typeFilter.value !== 'all') params.history_type = typeFilter.value
     if (dateFrom.value) params.date_from = dateFrom.value
     if (dateTo.value)   params.date_to   = dateTo.value
+    params.limit = String(perPage)
     const res = await maintenanceAPI.listHistory(params)
-    history.value = res.data.history ?? res.data ?? []
+    const d = res.data
+    history.value  = d.items ?? []
+    total.value    = d.total ?? history.value.length
+    totalCost.value    = d.total_cost ?? 0
+    totalHours.value   = d.total_hours ?? 0
+    totalDowntime.value = d.total_downtime ?? 0
+    page.value = 1
   } catch {
     app.addToast('Failed to load maintenance history', 'error')
   } finally {
@@ -196,7 +205,7 @@ onMounted(load)
             ? 'bg-violet-600 text-white border-violet-600'
             : dk('bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500',
                  'bg-white border-slate-200 text-slate-500 hover:border-slate-400')]">
-        All ({{ history.length }})
+        All ({{ total }})
       </button>
       <button v-for="t in typeCounts" :key="t.type"
         @click="typeFilter=t.type; page=1"
@@ -270,7 +279,7 @@ onMounted(load)
               </td>
               <td class="px-4 py-3">
                 <div class="font-medium text-sm">{{ fmtDate(h.performed_date) }}</div>
-                <div v-if="h.order_number" class="font-mono text-xs text-violet-400 mt-0.5">{{ h.order_number }}</div>
+                <div v-if="h.title" :class="['text-xs mt-0.5', dk('text-slate-500','text-slate-400')]">{{ h.title }}</div>
               </td>
               <td class="px-4 py-3">
                 <div v-if="h.equipment_name" class="font-medium text-sm">{{ h.equipment_name }}</div>
@@ -365,8 +374,8 @@ onMounted(load)
               <span :class="['px-2.5 py-1 rounded-lg text-xs font-medium', typeBadge(selected.history_type)]">
                 {{ typeLabel(selected.history_type) }}
               </span>
-              <span v-if="selected.order_number" class="font-mono text-xs px-2.5 py-1 rounded-lg bg-violet-500/15 text-violet-400">
-                {{ selected.order_number }}
+              <span v-if="selected.title" :class="['text-xs px-2.5 py-1 rounded-lg', dk('bg-slate-800 text-slate-300','bg-slate-100 text-slate-600')]">
+                {{ selected.title }}
               </span>
             </div>
             <!-- Grid details -->

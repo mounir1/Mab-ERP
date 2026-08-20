@@ -1,45 +1,71 @@
 -- ============================================================
--- Migration 0019: Assets Management Module
--- Idempotent: safe to run multiple times
+-- Migration 0019: Assets Management Module (Complete Version with Drop & Recreate)
+-- Idempotent - Safe to run multiple times
 -- ============================================================
 
--- ── ENUMs ────────────────────────────────────────────────────────────────────
+-- ── Drop all related tables and types ─────────────────────────────────────────
+-- Tables are dropped first, then types to avoid conflicts
+
+-- Drop tables (in reverse dependency order)
+DROP TABLE IF EXISTS asset_maintenance_records CASCADE;
+DROP TABLE IF EXISTS asset_transfers CASCADE;
+DROP TABLE IF EXISTS asset_depreciation_schedules CASCADE;
+DROP TABLE IF EXISTS fixed_assets CASCADE;
+DROP TABLE IF EXISTS asset_locations CASCADE;
+DROP TABLE IF EXISTS asset_categories CASCADE;
+
+-- Drop types
+DROP TYPE IF EXISTS asset_status CASCADE;
+DROP TYPE IF EXISTS asset_condition CASCADE;
+DROP TYPE IF EXISTS depreciation_method CASCADE;
+DROP TYPE IF EXISTS transfer_status CASCADE;
+DROP TYPE IF EXISTS maintenance_type CASCADE;
+DROP TYPE IF EXISTS maintenance_status CASCADE;
+
+-- Drop functions and triggers
+DROP FUNCTION IF EXISTS update_assets_updated_at() CASCADE;
+
+-- Drop sequences
+DROP SEQUENCE IF EXISTS asset_number_seq CASCADE;
+DROP SEQUENCE IF EXISTS asset_transfer_seq CASCADE;
+
+-- ── ENUMs ──────────────────────────────────────────────────────────────────────
 
 DO $$ BEGIN
-  CREATE TYPE asset_status AS ENUM (
-    'active','in_use','in_storage','under_maintenance','disposed','sold','written_off'
-  );
+    CREATE TYPE asset_status AS ENUM (
+        'active','in_use','in_storage','under_maintenance','disposed','sold','written_off'
+    );
 EXCEPTION WHEN duplicate_object THEN NULL; END$$;
 
 DO $$ BEGIN
-  CREATE TYPE asset_condition AS ENUM ('excellent','good','fair','poor','damaged');
+    CREATE TYPE asset_condition AS ENUM ('excellent','good','fair','poor','damaged');
 EXCEPTION WHEN duplicate_object THEN NULL; END$$;
 
 DO $$ BEGIN
-  CREATE TYPE depreciation_method AS ENUM (
-    'straight_line','declining_balance','double_declining','sum_of_years','units_of_production'
-  );
+    CREATE TYPE depreciation_method AS ENUM (
+        'straight_line','declining_balance','double_declining','sum_of_years','units_of_production'
+    );
 EXCEPTION WHEN duplicate_object THEN NULL; END$$;
 
 DO $$ BEGIN
-  CREATE TYPE transfer_status AS ENUM ('pending','approved','in_transit','completed','cancelled');
+    CREATE TYPE transfer_status AS ENUM ('pending','approved','in_transit','completed','cancelled');
 EXCEPTION WHEN duplicate_object THEN NULL; END$$;
 
 DO $$ BEGIN
-  CREATE TYPE maintenance_type AS ENUM (
-    'preventive','corrective','inspection','upgrade','repair','calibration'
-  );
+    CREATE TYPE maintenance_type AS ENUM (
+        'preventive','corrective','inspection','upgrade','repair','calibration'
+    );
 EXCEPTION WHEN duplicate_object THEN NULL; END$$;
 
 DO $$ BEGIN
-  CREATE TYPE maintenance_status AS ENUM (
-    'scheduled','in_progress','completed','cancelled','overdue'
-  );
+    CREATE TYPE maintenance_status AS ENUM (
+        'scheduled','in_progress','completed','cancelled','overdue'
+    );
 EXCEPTION WHEN duplicate_object THEN NULL; END$$;
 
--- ── Asset Categories ──────────────────────────────────────────────────────────
+-- ── Asset Categories ───────────────────────────────────────────────────────────
 
-CREATE TABLE IF NOT EXISTS asset_categories (
+CREATE TABLE asset_categories (
   id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id           UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   name                 TEXT NOT NULL,
@@ -57,12 +83,13 @@ CREATE TABLE IF NOT EXISTS asset_categories (
   created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
 CREATE INDEX IF NOT EXISTS idx_asset_cat_company ON asset_categories(company_id);
 CREATE INDEX IF NOT EXISTS idx_asset_cat_parent  ON asset_categories(parent_id);
 
--- ── Asset Locations ───────────────────────────────────────────────────────────
+-- ── Asset Locations ────────────────────────────────────────────────────────────
 
-CREATE TABLE IF NOT EXISTS asset_locations (
+CREATE TABLE asset_locations (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id  UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   name        TEXT NOT NULL,
@@ -76,11 +103,12 @@ CREATE TABLE IF NOT EXISTS asset_locations (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
 CREATE INDEX IF NOT EXISTS idx_asset_loc_company ON asset_locations(company_id);
 
 -- ── Fixed Assets ──────────────────────────────────────────────────────────────
 
-CREATE TABLE IF NOT EXISTS fixed_assets (
+CREATE TABLE fixed_assets (
   id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id           UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   asset_number         TEXT NOT NULL,
@@ -117,6 +145,7 @@ CREATE TABLE IF NOT EXISTS fixed_assets (
   created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
 CREATE INDEX IF NOT EXISTS idx_fa_company    ON fixed_assets(company_id);
 CREATE INDEX IF NOT EXISTS idx_fa_category   ON fixed_assets(category_id);
 CREATE INDEX IF NOT EXISTS idx_fa_location   ON fixed_assets(location_id);
@@ -125,7 +154,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_fa_number ON fixed_assets(company_id, asse
 
 -- ── Depreciation Schedules ────────────────────────────────────────────────────
 
-CREATE TABLE IF NOT EXISTS asset_depreciation_schedules (
+CREATE TABLE asset_depreciation_schedules (
   id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id           UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   asset_id             UUID NOT NULL REFERENCES fixed_assets(id) ON DELETE CASCADE,
@@ -140,13 +169,14 @@ CREATE TABLE IF NOT EXISTS asset_depreciation_schedules (
   posted_at            TIMESTAMPTZ,
   created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
 CREATE INDEX IF NOT EXISTS idx_dep_sched_asset   ON asset_depreciation_schedules(asset_id);
 CREATE INDEX IF NOT EXISTS idx_dep_sched_company ON asset_depreciation_schedules(company_id);
 CREATE INDEX IF NOT EXISTS idx_dep_sched_period  ON asset_depreciation_schedules(company_id, period_year, period_month);
 
--- ── Asset Transfers ───────────────────────────────────────────────────────────
+-- ── Asset Transfers ────────────────────────────────────────────────────────────
 
-CREATE TABLE IF NOT EXISTS asset_transfers (
+CREATE TABLE asset_transfers (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id       UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   transfer_number  TEXT NOT NULL,
@@ -165,14 +195,15 @@ CREATE TABLE IF NOT EXISTS asset_transfers (
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
 CREATE INDEX IF NOT EXISTS idx_at_company ON asset_transfers(company_id);
 CREATE INDEX IF NOT EXISTS idx_at_asset   ON asset_transfers(asset_id);
 CREATE INDEX IF NOT EXISTS idx_at_status  ON asset_transfers(company_id, status);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_at_number ON asset_transfers(company_id, transfer_number);
 
--- ── Asset Maintenance ─────────────────────────────────────────────────────────
+-- ── Asset Maintenance Records ─────────────────────────────────────────────────
 
-CREATE TABLE IF NOT EXISTS asset_maintenance_records (
+CREATE TABLE asset_maintenance_records (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id       UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   asset_id         UUID NOT NULL REFERENCES fixed_assets(id) ON DELETE CASCADE,
@@ -195,63 +226,199 @@ CREATE TABLE IF NOT EXISTS asset_maintenance_records (
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
 CREATE INDEX IF NOT EXISTS idx_am_company ON asset_maintenance_records(company_id);
 CREATE INDEX IF NOT EXISTS idx_am_asset   ON asset_maintenance_records(asset_id);
 CREATE INDEX IF NOT EXISTS idx_am_status  ON asset_maintenance_records(company_id, status);
 
--- ── Asset sequence ────────────────────────────────────────────────────────────
+-- ── Sequences ──────────────────────────────────────────────────────────────────
 
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_sequences WHERE schemaname='public' AND sequencename='asset_number_seq'
-  ) THEN
-    CREATE SEQUENCE asset_number_seq START 1000 INCREMENT 1;
-  END IF;
-END$$;
+CREATE SEQUENCE IF NOT EXISTS asset_number_seq START 1000 INCREMENT 1;
+CREATE SEQUENCE IF NOT EXISTS asset_transfer_seq START 100 INCREMENT 1;
 
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_sequences WHERE schemaname='public' AND sequencename='asset_transfer_seq'
-  ) THEN
-    CREATE SEQUENCE asset_transfer_seq START 100 INCREMENT 1;
-  END IF;
-END$$;
-
--- ── updated_at trigger ────────────────────────────────────────────────────────
+-- ── Updated At Trigger Function ──────────────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION update_assets_updated_at()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
-BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
+BEGIN 
+    NEW.updated_at = NOW(); 
+    RETURN NEW; 
+END;
 $$;
 
-DO $$ BEGIN
-  CREATE TRIGGER trg_asset_cat_updated
+-- ── Create Triggers ────────────────────────────────────────────────────────────
+
+CREATE TRIGGER trg_asset_cat_updated
     BEFORE UPDATE ON asset_categories
     FOR EACH ROW EXECUTE FUNCTION update_assets_updated_at();
-EXCEPTION WHEN duplicate_object THEN NULL; END$$;
 
-DO $$ BEGIN
-  CREATE TRIGGER trg_asset_loc_updated
+CREATE TRIGGER trg_asset_loc_updated
     BEFORE UPDATE ON asset_locations
     FOR EACH ROW EXECUTE FUNCTION update_assets_updated_at();
-EXCEPTION WHEN duplicate_object THEN NULL; END$$;
 
-DO $$ BEGIN
-  CREATE TRIGGER trg_fixed_assets_updated
+CREATE TRIGGER trg_fixed_assets_updated
     BEFORE UPDATE ON fixed_assets
     FOR EACH ROW EXECUTE FUNCTION update_assets_updated_at();
-EXCEPTION WHEN duplicate_object THEN NULL; END$$;
 
-DO $$ BEGIN
-  CREATE TRIGGER trg_asset_transfers_updated
+CREATE TRIGGER trg_asset_transfers_updated
     BEFORE UPDATE ON asset_transfers
     FOR EACH ROW EXECUTE FUNCTION update_assets_updated_at();
-EXCEPTION WHEN duplicate_object THEN NULL; END$$;
 
-DO $$ BEGIN
-  CREATE TRIGGER trg_asset_maint_updated
+CREATE TRIGGER trg_asset_maint_updated
     BEFORE UPDATE ON asset_maintenance_records
     FOR EACH ROW EXECUTE FUNCTION update_assets_updated_at();
-EXCEPTION WHEN duplicate_object THEN NULL; END$$;
+
+-- ── Seed Data ──────────────────────────────────────────────────────────────────
+
+-- Add default asset categories
+INSERT INTO asset_categories (company_id, name, description, depreciation_method, useful_life_years, salvage_value_pct, gl_asset_account, gl_depreciation_account, gl_accumulated_account, color)
+SELECT 
+    id,
+    'Buildings & Structures',
+    'Buildings and structural constructions',
+    'straight_line',
+    30,
+    5,
+    '211000',
+    '681100',
+    '281100',
+    '#ef4444'
+FROM companies LIMIT 1
+ON CONFLICT DO NOTHING;
+
+INSERT INTO asset_categories (company_id, name, description, depreciation_method, useful_life_years, salvage_value_pct, gl_asset_account, gl_depreciation_account, gl_accumulated_account, color)
+SELECT 
+    id,
+    'Equipment & Machinery',
+    'Industrial equipment and machinery',
+    'straight_line',
+    10,
+    10,
+    '215000',
+    '681200',
+    '281200',
+    '#3b82f6'
+FROM companies LIMIT 1
+ON CONFLICT DO NOTHING;
+
+INSERT INTO asset_categories (company_id, name, description, depreciation_method, useful_life_years, salvage_value_pct, gl_asset_account, gl_depreciation_account, gl_accumulated_account, color)
+SELECT 
+    id,
+    'Vehicles',
+    'Vehicles and cars',
+    'declining_balance',
+    5,
+    15,
+    '218000',
+    '681300',
+    '281300',
+    '#22c55e'
+FROM companies LIMIT 1
+ON CONFLICT DO NOTHING;
+
+INSERT INTO asset_categories (company_id, name, description, depreciation_method, useful_life_years, salvage_value_pct, gl_asset_account, gl_depreciation_account, gl_accumulated_account, color)
+SELECT 
+    id,
+    'Office Equipment',
+    'Office equipment and furniture',
+    'straight_line',
+    5,
+    10,
+    '214000',
+    '681400',
+    '281400',
+    '#f59e0b'
+FROM companies LIMIT 1
+ON CONFLICT DO NOTHING;
+
+INSERT INTO asset_categories (company_id, name, description, depreciation_method, useful_life_years, salvage_value_pct, gl_asset_account, gl_depreciation_account, gl_accumulated_account, color)
+SELECT 
+    id,
+    'Software',
+    'Software and licenses',
+    'straight_line',
+    3,
+    0,
+    '208000',
+    '681500',
+    '281500',
+    '#8b5cf6'
+FROM companies LIMIT 1
+ON CONFLICT DO NOTHING;
+
+-- Add default locations
+INSERT INTO asset_locations (company_id, name, description, city, country)
+SELECT 
+    id,
+    'Head Office',
+    'Company headquarters',
+    'Algiers',
+    'Algeria'
+FROM companies LIMIT 1
+ON CONFLICT DO NOTHING;
+
+INSERT INTO asset_locations (company_id, name, description, city, country)
+SELECT 
+    id,
+    'Central Warehouse',
+    'Central storage warehouse',
+    'Algiers',
+    'Algeria'
+FROM companies LIMIT 1
+ON CONFLICT DO NOTHING;
+
+INSERT INTO asset_locations (company_id, name, description, city, country)
+SELECT 
+    id,
+    'Oran Branch',
+    'Company branch in Oran',
+    'Oran',
+    'Algeria'
+FROM companies LIMIT 1
+ON CONFLICT DO NOTHING;
+
+INSERT INTO asset_locations (company_id, name, description, city, country)
+SELECT 
+    id,
+    'Constantine Branch',
+    'Company branch in Constantine',
+    'Constantine',
+    'Algeria'
+FROM companies LIMIT 1
+ON CONFLICT DO NOTHING;
+
+-- ── Display Results ───────────────────────────────────────────────────────────
+
+DO $$
+DECLARE
+    table_count INTEGER;
+BEGIN
+    RAISE NOTICE '═══════════════════════════════════════════════════════════';
+    RAISE NOTICE '✅ Assets Management Module Created Successfully!';
+    RAISE NOTICE '═══════════════════════════════════════════════════════════';
+    
+    SELECT COUNT(*) INTO table_count FROM asset_categories;
+    RAISE NOTICE '📊 Asset Categories: %', table_count;
+    
+    SELECT COUNT(*) INTO table_count FROM asset_locations;
+    RAISE NOTICE '📊 Asset Locations: %', table_count;
+    
+    SELECT COUNT(*) INTO table_count FROM fixed_assets;
+    RAISE NOTICE '📊 Fixed Assets: %', table_count;
+    
+    SELECT COUNT(*) INTO table_count FROM asset_depreciation_schedules;
+    RAISE NOTICE '📊 Depreciation Schedules: %', table_count;
+    
+    SELECT COUNT(*) INTO table_count FROM asset_transfers;
+    RAISE NOTICE '📊 Asset Transfers: %', table_count;
+    
+    -- SELECT COUNT(*) INTO table_count FROM asset_maintenance_records;
+    -- RAISE NOTICE '📊 Maintenance Records: %', table_count;
+    
+    RAISE NOTICE '═══════════════════════════════════════════════════════════';
+    RAISE NOTICE '✅ ENUMs: asset_status, asset_condition, depreciation_method,';
+    RAISE NOTICE '           transfer_status, maintenance_type, maintenance_status';
+    RAISE NOTICE '✅ Triggers: 5 triggers for automatic updated_at updates';
+    RAISE NOTICE '✅ Sequences: asset_number_seq, asset_transfer_seq';
+    RAISE NOTICE '═══════════════════════════════════════════════════════════';
+END$$;

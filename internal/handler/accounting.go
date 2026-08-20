@@ -397,14 +397,16 @@ func (h *AccountingHandler) ListFixedAssets(c *gin.Context) {
 	companyID := middleware.GetCompanyID(c)
 	ctx := context.Background()
 	rows, err := h.db.Query(ctx,
-		`SELECT id, COALESCE(code,''), name, COALESCE(category,''),
-		        purchase_date, COALESCE(purchase_value,0),
-		        COALESCE(residual_value,0), COALESCE(current_value,0),
-		        COALESCE(accumulated_depreciation,0),
-		        COALESCE(depreciation_method,'linear'),
-		        COALESCE(useful_life_years,0), COALESCE(depreciation_rate,0),
-		        COALESCE(status,'active'), created_at
-		 FROM fixed_assets WHERE company_id = $1 ORDER BY name`, companyID)
+		`SELECT fa.id, COALESCE(fa.asset_number,''), fa.name, COALESCE(ac.name,''),
+		        fa.purchase_date, COALESCE(fa.purchase_cost,0),
+		        COALESCE(fa.salvage_value,0), COALESCE(fa.net_book_value,0),
+		        COALESCE(fa.accumulated_depreciation,0),
+		        COALESCE(fa.depreciation_method::text,'straight_line'),
+		        COALESCE(fa.useful_life_years,0), COALESCE(fa.depreciation_rate,0),
+		        COALESCE(fa.status::text,'active'), fa.created_at
+		 FROM fixed_assets fa
+		 LEFT JOIN asset_categories ac ON ac.id = fa.category_id
+		 WHERE fa.company_id = $1 ORDER BY fa.name`, companyID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -447,15 +449,15 @@ func (h *AccountingHandler) CreateFixedAsset(c *gin.Context) {
 	ctx := context.Background()
 	_, err := h.db.Exec(ctx, `
 		INSERT INTO fixed_assets
-		(id, company_id, code, name, category, purchase_date, purchase_value,
-		 residual_value, current_value, depreciation_method, useful_life_years,
+		(id, company_id, asset_number, name, category_id, purchase_date, purchase_cost,
+		 salvage_value, useful_life_years, depreciation_method,
 		 depreciation_rate, status)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+		VALUES ($1,$2,$3,$4,(SELECT id FROM asset_categories WHERE company_id=$2 AND name=$5 LIMIT 1),$6,$7,$8,$10,$9,$11,'active')
 	`, fa.ID, fa.CompanyID, fa.Code, fa.Name, fa.Category,
 		fa.PurchaseDate, fa.PurchaseValue,
-		fa.ResidualValue, fa.CurrentValue,
+		fa.ResidualValue,
 		fa.DepreciationMethod, fa.UsefulLifeYears,
-		fa.DepreciationRate, "active")
+		fa.DepreciationRate)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -467,13 +469,13 @@ func (h *AccountingHandler) RunDepreciation(c *gin.Context) {
 	companyID := middleware.GetCompanyID(c)
 	ctx := context.Background()
 
-	// Use correct column names: purchase_value, current_value
+	// Use real column names: purchase_cost, salvage_value, net_book_value
 	rows, err := h.db.Query(ctx, `
-		SELECT id, COALESCE(purchase_value,0), COALESCE(residual_value,0),
-		       COALESCE(current_value,0), COALESCE(useful_life_years,1),
-		       COALESCE(depreciation_method,'linear')
+		SELECT id, COALESCE(purchase_cost,0), COALESCE(salvage_value,0),
+		       COALESCE(net_book_value,0), COALESCE(useful_life_years,1),
+		       COALESCE(depreciation_method::text,'straight_line')
 		FROM fixed_assets
-		WHERE company_id = $1 AND status = 'active' AND current_value > residual_value
+		WHERE company_id = $1 AND status = 'active' AND net_book_value > salvage_value
 	`, companyID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -516,11 +518,10 @@ func (h *AccountingHandler) RunDepreciation(c *gin.Context) {
 			continue
 		}
 
-		// Update current_value and accumulated_depreciation
+		// Update accumulated_depreciation (net_book_value is GENERATED)
 		_, _ = h.db.Exec(ctx, `
 			UPDATE fixed_assets
-			SET current_value = current_value - $1,
-			    accumulated_depreciation = accumulated_depreciation + $1
+			SET accumulated_depreciation = accumulated_depreciation + $1
 			WHERE id = $2
 		`, monthlyDep, assetID)
 

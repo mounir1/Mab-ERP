@@ -3,53 +3,36 @@ import { ref, computed, onMounted, watch } from 'vue'
 import {
   BarChart2, RefreshCw, Calendar, DollarSign,
   Wrench, CheckCircle, Clock, AlertTriangle,
-  TrendingUp, TrendingDown, Package, Shield,
-  ChevronDown, Settings, FileText
+  TrendingUp, Shield, Settings, FileText, Package
 } from '@lucide/vue'
 import { maintenanceAPI } from '@/api/client'
 import { useAppStore } from '@/stores/app'
 
 const app = useAppStore()
 
-// ─── types ────────────────────────────────────────────────────────────────────
-interface DashboardData {
-  equipment_summary: {
-    total: number
-    operational: number
-    under_maintenance: number
-    out_of_service: number
-    retired: number
-  }
-  orders_summary: {
-    total: number
-    pending: number
-    in_progress: number
-    completed: number
-    cancelled: number
-    overdue: number
-  }
-  cost_summary: {
+// ─── types (mirror /maintenance/reports response) ────────────────────────────
+interface ReportsData {
+  year: number
+  kpis: {
+    total_orders: number
+    completed_orders: number
+    preventive_count: number
+    corrective_count: number
     total_cost: number
     labor_cost: number
     parts_cost: number
-    other_cost: number
-    avg_cost_per_order: number
+    avg_duration_hours: number
+    completion_rate: number
   }
-  mttr: number
-  uptime_rate: number
-  pm_compliance: number
-  by_type: Array<{ type: string; count: number; cost: number }>
-  by_equipment: Array<{ equipment_name: string; orders: number; total_cost: number }>
-  monthly_costs: Array<{ month: string; cost: number; orders: number }>
-  recent_orders: Array<{
-    id: string; order_number: string; title: string
-    status: string; order_type: string; scheduled_date?: string
-    equipment_name?: string
-  }>
+  monthly: Array<{ month: string; orders: number; completed: number; total_cost: number }>
+  by_category: Array<{ category: string; count: number; cost: number; hours: number }>
+  by_status: Array<{ status: string; count: number }>
+  mtbf: Array<{ id: string; name: string; code: string; failure_count: number; total_downtime_hours: number; total_cost: number; mtbf_days: number }>
+  upcoming_pm: Array<{ id: string; name: string; next_due: string; equipment: string; days_left: number }>
 }
 
 // ─── state ────────────────────────────────────────────────────────────────────
-const data    = ref<DashboardData | null>(null)
+const data    = ref<ReportsData | null>(null)
 const loading = ref(false)
 const year    = ref(new Date().getFullYear())
 
@@ -58,32 +41,35 @@ const years = computed(() => {
   return [y, y-1, y-2, y-3]
 })
 
-// ─── computed ────────────────────────────────────────────────────────────────
+// ─── computed ─────────────────────────────────────────────────────────────────
 const dk = (a: string, b: string) => app.darkMode ? a : b
 
-const equipSummary = computed(() => data.value?.equipment_summary ?? {
-  total:0, operational:0, under_maintenance:0, out_of_service:0, retired:0
+const kpis = computed(() => data.value?.kpis ?? {
+  total_orders: 0, completed_orders: 0, preventive_count: 0, corrective_count: 0,
+  total_cost: 0, labor_cost: 0, parts_cost: 0, avg_duration_hours: 0, completion_rate: 0,
 })
 
-const ordersSummary = computed(() => data.value?.orders_summary ?? {
-  total:0, pending:0, in_progress:0, completed:0, cancelled:0, overdue:0
-})
+const byCategory = computed(() => data.value?.by_category ?? [])
 
-const costSummary = computed(() => data.value?.cost_summary ?? {
-  total_cost:0, labor_cost:0, parts_cost:0, other_cost:0, avg_cost_per_order:0
-})
+const byStatus = computed(() => data.value?.by_status ?? [])
 
-const byType = computed(() => data.value?.by_type ?? [])
-
-const byEquipment = computed(() => (data.value?.by_equipment ?? []).slice(0, 10))
-
-const monthlyCosts = computed(() => data.value?.monthly_costs ?? [])
+const monthly = computed(() => data.value?.monthly ?? [])
 
 const maxMonthlyCost = computed(() =>
-  Math.max(...monthlyCosts.value.map(m => m.cost), 1)
+  Math.max(...monthly.value.map(m => m.total_cost), 1)
 )
 
-const recentOrders = computed(() => data.value?.recent_orders ?? [])
+const mtbf = computed(() => data.value?.mtbf ?? [])
+
+const upcomingPM = computed(() => data.value?.upcoming_pm ?? [])
+
+const otherCost = computed(() =>
+  Math.max(0, kpis.value.total_cost - kpis.value.labor_cost - kpis.value.parts_cost)
+)
+
+const avgCostPerOrder = computed(() =>
+  kpis.value.total_orders > 0 ? kpis.value.total_cost / kpis.value.total_orders : 0
+)
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const fmt = (n: number) =>
@@ -97,20 +83,9 @@ const fmtDate = (s?: string) => {
 const pct = (n: number, total: number) =>
   total > 0 ? Math.round((n / total) * 100) : 0
 
-const typeColor = (t: string) => ({
-  corrective:'#f43f5e', preventive:'#10b981',
-  inspection:'#8b5cf6', emergency:'#f97316',
-  upgrade:'#f59e0b', other:'#64748b',
-}[t] ?? '#64748b')
-
-const typeLabel = (t: string) => ({
-  corrective:'Corrective', preventive:'Preventive',
-  inspection:'Inspection', emergency:'Emergency',
-  upgrade:'Upgrade', other:'Other',
-}[t] ?? t)
-
 const statusBadge = (s: string) => ({
-  pending:'bg-slate-500/15 text-slate-400',
+  draft:'bg-slate-500/15 text-slate-400',
+  planned:'bg-indigo-500/15 text-indigo-400',
   in_progress:'bg-blue-500/15 text-blue-400',
   on_hold:'bg-amber-500/15 text-amber-400',
   completed:'bg-emerald-500/15 text-emerald-400',
@@ -118,7 +93,7 @@ const statusBadge = (s: string) => ({
 }[s] ?? 'bg-slate-500/15 text-slate-400')
 
 const statusLabel = (s: string) => ({
-  pending:'Pending', in_progress:'In Progress', on_hold:'On Hold',
+  draft:'Draft', planned:'Planned', in_progress:'In Progress', on_hold:'On Hold',
   completed:'Completed', cancelled:'Cancelled',
 }[s] ?? s)
 
@@ -181,7 +156,7 @@ onMounted(load)
     <template v-else-if="data">
 
       <!-- ── Top KPI Row ─────────────────────────────────────────────────── -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <div :class="['rounded-xl border p-4', dk('bg-slate-900 border-slate-800','bg-white border-slate-200')]">
           <div class="flex items-center justify-between mb-3">
             <span :class="['text-xs font-medium', dk('text-slate-400','text-slate-500')]">Total Cost</span>
@@ -189,109 +164,83 @@ onMounted(load)
               <DollarSign class="w-4 h-4 text-teal-400" />
             </div>
           </div>
-          <div class="text-xl font-bold">{{ fmt(costSummary.total_cost) }}</div>
-          <div :class="['text-xs mt-1', dk('text-slate-500','text-slate-400')]">Avg {{ fmt(costSummary.avg_cost_per_order) }} / order</div>
+          <div class="text-xl font-bold">{{ fmt(kpis.total_cost) }}</div>
+          <div :class="['text-xs mt-1', dk('text-slate-500','text-slate-400')]">Avg {{ fmt(avgCostPerOrder) }} / order</div>
         </div>
 
         <div :class="['rounded-xl border p-4', dk('bg-slate-900 border-slate-800','bg-white border-slate-200')]">
           <div class="flex items-center justify-between mb-3">
-            <span :class="['text-xs font-medium', dk('text-slate-400','text-slate-500')]">MTTR</span>
+            <span :class="['text-xs font-medium', dk('text-slate-400','text-slate-500')]">Completion Rate</span>
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <CheckCircle class="w-4 h-4 text-emerald-400" />
+            </div>
+          </div>
+          <div class="text-xl font-bold">{{ kpis.completion_rate?.toFixed(1) ?? '—' }}%</div>
+          <div class="mt-2 h-1.5 rounded-full" :class="dk('bg-slate-700','bg-slate-200')">
+            <div class="h-full rounded-full bg-emerald-400 transition-all"
+              :style="{ width: (kpis.completion_rate || 0) + '%' }"></div>
+          </div>
+        </div>
+
+        <div :class="['rounded-xl border p-4', dk('bg-slate-900 border-slate-800','bg-white border-slate-200')]">
+          <div class="flex items-center justify-between mb-3">
+            <span :class="['text-xs font-medium', dk('text-slate-400','text-slate-500')]">Avg Duration</span>
             <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
               <Clock class="w-4 h-4 text-amber-400" />
             </div>
           </div>
-          <div class="text-xl font-bold">{{ data.mttr?.toFixed(1) ?? '—' }}h</div>
-          <div :class="['text-xs mt-1', dk('text-slate-500','text-slate-400')]">Mean time to repair</div>
+          <div class="text-xl font-bold">{{ kpis.avg_duration_hours?.toFixed(1) ?? '—' }}h</div>
+          <div :class="['text-xs mt-1', dk('text-slate-500','text-slate-400')]">Mean repair time</div>
         </div>
 
         <div :class="['rounded-xl border p-4', dk('bg-slate-900 border-slate-800','bg-white border-slate-200')]">
           <div class="flex items-center justify-between mb-3">
-            <span :class="['text-xs font-medium', dk('text-slate-400','text-slate-500')]">Uptime Rate</span>
-            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <TrendingUp class="w-4 h-4 text-emerald-400" />
-            </div>
-          </div>
-          <div class="text-xl font-bold">{{ data.uptime_rate?.toFixed(1) ?? '—' }}%</div>
-          <div class="mt-2 h-1.5 rounded-full" :class="dk('bg-slate-700','bg-slate-200')">
-            <div class="h-full rounded-full bg-emerald-400 transition-all"
-              :style="{ width: (data.uptime_rate || 0) + '%' }"></div>
-          </div>
-        </div>
-
-        <div :class="['rounded-xl border p-4', dk('bg-slate-900 border-slate-800','bg-white border-slate-200')]">
-          <div class="flex items-center justify-between mb-3">
-            <span :class="['text-xs font-medium', dk('text-slate-400','text-slate-500')]">PM Compliance</span>
+            <span :class="['text-xs font-medium', dk('text-slate-400','text-slate-500')]">Preventive</span>
             <div class="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
               <Shield class="w-4 h-4 text-violet-400" />
             </div>
           </div>
-          <div class="text-xl font-bold">{{ data.pm_compliance?.toFixed(1) ?? '—' }}%</div>
-          <div class="mt-2 h-1.5 rounded-full" :class="dk('bg-slate-700','bg-slate-200')">
-            <div class="h-full rounded-full bg-violet-400 transition-all"
-              :style="{ width: (data.pm_compliance || 0) + '%' }"></div>
+          <div class="text-xl font-bold">{{ kpis.preventive_count }}</div>
+          <div :class="['text-xs mt-1', dk('text-slate-500','text-slate-400')]">scheduled orders</div>
+        </div>
+
+        <div :class="['rounded-xl border p-4', dk('bg-slate-900 border-slate-800','bg-white border-slate-200')]">
+          <div class="flex items-center justify-between mb-3">
+            <span :class="['text-xs font-medium', dk('text-slate-400','text-slate-500')]">Corrective</span>
+            <div class="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center">
+              <Wrench class="w-4 h-4 text-rose-400" />
+            </div>
           </div>
+          <div class="text-xl font-bold">{{ kpis.corrective_count }}</div>
+          <div :class="['text-xs mt-1', dk('text-slate-500','text-slate-400')]">unplanned orders</div>
         </div>
       </div>
 
-      <!-- ── Equipment + Orders Summaries ───────────────────────────────── -->
+      <!-- ── Orders by Status + Cost Breakdown ───────────────────────────── -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        <!-- Equipment Status -->
+        <!-- Orders by Status -->
         <div :class="['rounded-xl border p-5', dk('bg-slate-900 border-slate-800','bg-white border-slate-200')]">
           <div class="flex items-center gap-2 mb-4">
-            <Settings class="w-4 h-4 text-slate-400" />
-            <h2 class="font-semibold text-sm">Equipment Status</h2>
+            <Wrench class="w-4 h-4 text-slate-400" />
+            <h2 class="font-semibold text-sm">Work Orders by Status — {{ year }}</h2>
             <span :class="['ml-auto text-xs font-bold', dk('text-slate-400','text-slate-500')]">
-              {{ equipSummary.total }} total
+              {{ kpis.total_orders }} total
             </span>
           </div>
           <div class="space-y-3">
-            <div v-for="item in [
-              { label: 'Operational',       value: equipSummary.operational,        color: 'bg-emerald-400', text: 'text-emerald-400' },
-              { label: 'Under Maintenance', value: equipSummary.under_maintenance,  color: 'bg-amber-400',   text: 'text-amber-400' },
-              { label: 'Out of Service',    value: equipSummary.out_of_service,     color: 'bg-rose-400',    text: 'text-rose-400' },
-              { label: 'Retired',           value: equipSummary.retired,            color: 'bg-slate-500',   text: 'text-slate-400' },
-            ]" :key="item.label">
-              <div class="flex items-center gap-3">
-                <span :class="['text-xs w-36 flex-shrink-0', dk('text-slate-400','text-slate-500')]">{{ item.label }}</span>
-                <div class="flex-1 h-2 rounded-full" :class="dk('bg-slate-800','bg-slate-200')">
-                  <div :class="['h-full rounded-full transition-all', item.color]"
-                    :style="{ width: pct(item.value, equipSummary.total) + '%' }"></div>
-                </div>
-                <span :class="['text-xs font-semibold w-8 text-right', item.text]">{{ item.value }}</span>
+            <div v-for="s in byStatus" :key="s.status">
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span :class="dk('text-slate-300','text-slate-700')">{{ statusLabel(s.status) }}</span>
+                <span :class="['font-semibold', dk('text-slate-400','text-slate-500')]">{{ s.count }}</span>
+              </div>
+              <div class="h-1.5 rounded-full" :class="dk('bg-slate-800','bg-slate-200')">
+                <div class="h-full rounded-full bg-violet-400 transition-all"
+                  :style="{ width: pct(s.count, kpis.total_orders) + '%' }"></div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Orders Status -->
-        <div :class="['rounded-xl border p-5', dk('bg-slate-900 border-slate-800','bg-white border-slate-200')]">
-          <div class="flex items-center gap-2 mb-4">
-            <Wrench class="w-4 h-4 text-slate-400" />
-            <h2 class="font-semibold text-sm">Work Orders — {{ year }}</h2>
-            <span :class="['ml-auto text-xs font-bold', dk('text-slate-400','text-slate-500')]">
-              {{ ordersSummary.total }} total
-            </span>
-          </div>
-          <div class="grid grid-cols-3 gap-3">
-            <div v-for="item in [
-              { label: 'Pending',     value: ordersSummary.pending,     color: 'text-slate-400',   bg: 'bg-slate-500/10' },
-              { label: 'In Progress', value: ordersSummary.in_progress, color: 'text-blue-400',    bg: 'bg-blue-500/10' },
-              { label: 'Completed',   value: ordersSummary.completed,   color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-              { label: 'Overdue',     value: ordersSummary.overdue,     color: 'text-rose-400',    bg: 'bg-rose-500/10' },
-              { label: 'Cancelled',   value: ordersSummary.cancelled,   color: 'text-slate-400',   bg: 'bg-slate-500/10' },
-              { label: 'Total',       value: ordersSummary.total,       color: 'text-violet-400',  bg: 'bg-violet-500/10' },
-            ]" :key="item.label"
-              :class="['rounded-xl p-3 text-center', item.bg]">
-              <div :class="['text-xl font-bold', item.color]">{{ item.value }}</div>
-              <div :class="['text-xs mt-0.5', dk('text-slate-400','text-slate-500')]">{{ item.label }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Cost Breakdown + Type Distribution ─────────────────────────── -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         <!-- Cost Breakdown -->
         <div :class="['rounded-xl border p-5', dk('bg-slate-900 border-slate-800','bg-white border-slate-200')]">
@@ -301,9 +250,9 @@ onMounted(load)
           </div>
           <div class="space-y-4">
             <div v-for="item in [
-              { label: 'Labor Cost',  value: costSummary.labor_cost,  color: 'bg-blue-400',    text: 'text-blue-400' },
-              { label: 'Parts Cost',  value: costSummary.parts_cost,  color: 'bg-amber-400',   text: 'text-amber-400' },
-              { label: 'Other Cost',  value: costSummary.other_cost,  color: 'bg-violet-400',  text: 'text-violet-400' },
+              { label: 'Labor Cost',  value: kpis.labor_cost,  color: 'bg-blue-400',    text: 'text-blue-400' },
+              { label: 'Parts Cost',  value: kpis.parts_cost,  color: 'bg-amber-400',   text: 'text-amber-400' },
+              { label: 'Other Cost',  value: otherCost,        color: 'bg-violet-400',  text: 'text-violet-400' },
             ]" :key="item.label">
               <div class="flex items-center justify-between text-xs mb-1">
                 <span :class="dk('text-slate-400','text-slate-500')">{{ item.label }}</span>
@@ -311,44 +260,15 @@ onMounted(load)
               </div>
               <div class="h-2 rounded-full" :class="dk('bg-slate-800','bg-slate-200')">
                 <div :class="['h-full rounded-full transition-all', item.color]"
-                  :style="{ width: pct(item.value, costSummary.total_cost) + '%' }"></div>
+                  :style="{ width: pct(item.value, kpis.total_cost) + '%' }"></div>
               </div>
               <div :class="['text-xs mt-0.5 text-right', dk('text-slate-500','text-slate-400')]">
-                {{ pct(item.value, costSummary.total_cost) }}%
+                {{ pct(item.value, kpis.total_cost) }}%
               </div>
             </div>
             <div :class="['pt-3 border-t flex items-center justify-between', dk('border-slate-700','border-slate-200')]">
               <span :class="['text-xs font-medium', dk('text-slate-300','text-slate-700')]">Total</span>
-              <span class="font-bold text-teal-400">{{ fmt(costSummary.total_cost) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- By Type -->
-        <div :class="['rounded-xl border p-5', dk('bg-slate-900 border-slate-800','bg-white border-slate-200')]">
-          <div class="flex items-center gap-2 mb-4">
-            <BarChart2 class="w-4 h-4 text-violet-400" />
-            <h2 class="font-semibold text-sm">Orders by Type</h2>
-          </div>
-          <div v-if="!byType.length" class="text-center py-8">
-            <p :class="['text-sm', dk('text-slate-500','text-slate-400')]">No data for selected year</p>
-          </div>
-          <div v-else class="space-y-3">
-            <div v-for="t in byType" :key="t.type">
-              <div class="flex items-center justify-between text-xs mb-1">
-                <div class="flex items-center gap-2">
-                  <div class="w-2 h-2 rounded-full" :style="{ backgroundColor: typeColor(t.type) }"></div>
-                  <span :class="dk('text-slate-300','text-slate-700')">{{ typeLabel(t.type) }}</span>
-                </div>
-                <div class="flex items-center gap-3">
-                  <span :class="['font-medium', dk('text-slate-400','text-slate-500')]">{{ t.count }} orders</span>
-                  <span class="font-semibold" :style="{ color: typeColor(t.type) }">{{ fmt(t.cost) }}</span>
-                </div>
-              </div>
-              <div class="h-1.5 rounded-full" :class="dk('bg-slate-800','bg-slate-200')">
-                <div class="h-full rounded-full transition-all"
-                  :style="{ backgroundColor: typeColor(t.type), width: pct(t.count, ordersSummary.total) + '%' }"></div>
-              </div>
+              <span class="font-bold text-teal-400">{{ fmt(kpis.total_cost) }}</span>
             </div>
           </div>
         </div>
@@ -360,19 +280,19 @@ onMounted(load)
           <TrendingUp class="w-4 h-4 text-violet-400" />
           <h2 class="font-semibold text-sm">Monthly Cost Trend — {{ year }}</h2>
         </div>
-        <div v-if="!monthlyCosts.length" class="text-center py-8">
+        <div v-if="!monthly.length" class="text-center py-8">
           <p :class="['text-sm', dk('text-slate-500','text-slate-400')]">No monthly data available</p>
         </div>
         <div v-else class="flex items-end gap-2 h-40">
-          <div v-for="m in monthlyCosts" :key="m.month"
+          <div v-for="m in monthly" :key="m.month"
             class="flex-1 flex flex-col items-center gap-1 min-w-0">
             <div :class="['text-xs font-medium', dk('text-slate-400','text-slate-500')]" style="writing-mode:initial">
               {{ m.orders }}
             </div>
             <div class="w-full relative flex items-end" style="height:100px">
               <div class="w-full rounded-t-md transition-all bg-violet-500/70 hover:bg-violet-500 cursor-default"
-                :style="{ height: Math.max(4, (m.cost / maxMonthlyCost) * 100) + 'px' }"
-                :title="`${monthShort(m.month)}: ${m.orders} orders, ${m.cost.toLocaleString('fr-DZ')} DZD`">
+                :style="{ height: Math.max(4, (m.total_cost / maxMonthlyCost) * 100) + 'px' }"
+                :title="`${monthShort(m.month)}: ${m.orders} orders, ${m.total_cost.toLocaleString('fr-DZ')} DZD`">
               </div>
             </div>
             <div :class="['text-xs', dk('text-slate-400','text-slate-500')]">{{ monthShort(m.month) }}</div>
@@ -380,20 +300,46 @@ onMounted(load)
         </div>
       </div>
 
-      <!-- ── Top Equipment + Recent Orders ──────────────────────────────── -->
+      <!-- ── By Category + MTBF ──────────────────────────────────────────── -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        <!-- Top Equipment by Cost -->
+        <!-- By Category -->
         <div :class="['rounded-xl border p-5', dk('bg-slate-900 border-slate-800','bg-white border-slate-200')]">
           <div class="flex items-center gap-2 mb-4">
             <Package class="w-4 h-4 text-amber-400" />
-            <h2 class="font-semibold text-sm">Top Equipment by Cost</h2>
+            <h2 class="font-semibold text-sm">Orders by Equipment Category</h2>
           </div>
-          <div v-if="!byEquipment.length" class="text-center py-8">
-            <p :class="['text-sm', dk('text-slate-500','text-slate-400')]">No equipment data</p>
+          <div v-if="!byCategory.length" class="text-center py-8">
+            <p :class="['text-sm', dk('text-slate-500','text-slate-400')]">No category data</p>
+          </div>
+          <div v-else class="space-y-3">
+            <div v-for="c in byCategory" :key="c.category">
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span :class="dk('text-slate-300','text-slate-700')">{{ c.category }}</span>
+                <div class="flex items-center gap-3">
+                  <span :class="['font-medium', dk('text-slate-400','text-slate-500')]">{{ c.count }} orders</span>
+                  <span class="font-semibold text-teal-400">{{ fmt(c.cost) }}</span>
+                </div>
+              </div>
+              <div class="h-1.5 rounded-full" :class="dk('bg-slate-800','bg-slate-200')">
+                <div class="h-full rounded-full bg-amber-400 transition-all"
+                  :style="{ width: pct(c.count, kpis.total_orders) + '%' }"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MTBF -->
+        <div :class="['rounded-xl border p-5', dk('bg-slate-900 border-slate-800','bg-white border-slate-200')]">
+          <div class="flex items-center gap-2 mb-4">
+            <BarChart2 class="w-4 h-4 text-violet-400" />
+            <h2 class="font-semibold text-sm">Equipment Reliability (MTBF)</h2>
+          </div>
+          <div v-if="!mtbf.length" class="text-center py-8">
+            <p :class="['text-sm', dk('text-slate-500','text-slate-400')]">No failure history</p>
           </div>
           <div v-else class="space-y-2">
-            <div v-for="(e, idx) in byEquipment" :key="e.equipment_name"
+            <div v-for="(e, idx) in mtbf" :key="e.id"
               :class="['flex items-center gap-3 p-2.5 rounded-xl text-sm',
                 dk('hover:bg-slate-800','hover:bg-slate-50')]">
               <div :class="['w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0',
@@ -404,45 +350,44 @@ onMounted(load)
                 {{ idx+1 }}
               </div>
               <div class="flex-1 min-w-0">
-                <div class="font-medium text-sm truncate">{{ e.equipment_name }}</div>
-                <div :class="['text-xs', dk('text-slate-500','text-slate-400')]">{{ e.orders }} orders</div>
+                <div class="font-medium text-sm truncate">{{ e.name }}</div>
+                <div :class="['text-xs', dk('text-slate-500','text-slate-400')]">
+                  {{ e.failure_count }} failures • {{ e.total_downtime_hours.toFixed(1) }}h downtime
+                </div>
               </div>
               <div class="text-right flex-shrink-0">
                 <div class="font-semibold text-teal-400 text-sm">{{ fmt(e.total_cost) }}</div>
+                <div :class="['text-xs', dk('text-slate-500','text-slate-400')]">{{ e.mtbf_days.toFixed(1) }}d MTBF</div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Recent Orders -->
-        <div :class="['rounded-xl border p-5', dk('bg-slate-900 border-slate-800','bg-white border-slate-200')]">
-          <div class="flex items-center gap-2 mb-4">
-            <FileText class="w-4 h-4 text-blue-400" />
-            <h2 class="font-semibold text-sm">Recent Orders</h2>
-          </div>
-          <div v-if="!recentOrders.length" class="text-center py-8">
-            <p :class="['text-sm', dk('text-slate-500','text-slate-400')]">No recent orders</p>
-          </div>
-          <div v-else class="space-y-2">
-            <div v-for="o in recentOrders.slice(0,8)" :key="o.id"
-              :class="['flex items-start gap-3 p-2.5 rounded-xl text-sm',
-                dk('hover:bg-slate-800','hover:bg-slate-50')]">
-              <div class="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
-                :style="{ backgroundColor: typeColor(o.order_type) }"></div>
-              <div class="flex-1 min-w-0">
-                <div class="font-medium text-sm truncate">{{ o.title }}</div>
-                <div class="flex items-center gap-2 mt-0.5">
-                  <span class="font-mono text-xs text-violet-400">{{ o.order_number }}</span>
-                  <span v-if="o.equipment_name" :class="['text-xs', dk('text-slate-500','text-slate-400')]">
-                    • {{ o.equipment_name }}
-                  </span>
-                </div>
-              </div>
-              <div class="flex-shrink-0 text-right">
-                <span :class="['px-2 py-0.5 rounded-md text-xs font-medium', statusBadge(o.status)]">
-                  {{ statusLabel(o.status) }}
-                </span>
-                <div :class="['text-xs mt-1', dk('text-slate-500','text-slate-400')]">{{ fmtDate(o.scheduled_date) }}</div>
+      <!-- ── Upcoming Preventive Maintenance ────────────────────────────── -->
+      <div :class="['rounded-xl border p-5', dk('bg-slate-900 border-slate-800','bg-white border-slate-200')]">
+        <div class="flex items-center gap-2 mb-4">
+          <Calendar class="w-4 h-4 text-cyan-400" />
+          <h2 class="font-semibold text-sm">Upcoming Preventive Maintenance (next 60 days)</h2>
+        </div>
+        <div v-if="!upcomingPM.length" class="text-center py-8">
+          <p :class="['text-sm', dk('text-slate-500','text-slate-400')]">No upcoming PM scheduled</p>
+        </div>
+        <div v-else class="space-y-2">
+          <div v-for="p in upcomingPM" :key="p.id"
+            :class="['flex items-center gap-3 p-2.5 rounded-xl text-sm',
+              dk('hover:bg-slate-800','hover:bg-slate-50')]">
+            <div class="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+              <FileText class="w-4 h-4 text-emerald-400" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-sm truncate">{{ p.name }}</div>
+              <div :class="['text-xs', dk('text-slate-500','text-slate-400')]">Equipment: {{ p.equipment }}</div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <div class="font-medium text-sm">{{ fmtDate(p.next_due) }}</div>
+              <div :class="['text-xs', p.days_left < 0 ? 'text-rose-400' : dk('text-slate-500','text-slate-400')]">
+                {{ p.days_left < 0 ? 'overdue' : p.days_left + ' days left' }}
               </div>
             </div>
           </div>

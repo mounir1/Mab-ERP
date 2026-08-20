@@ -25,11 +25,12 @@ func (h *TreasuryHandler) ListCashAccounts(c *gin.Context) {
 
 	rows, err := h.db.Query(ctx, `
 		SELECT
-			id, name, COALESCE(account_type, 'petty_cash'),
-			COALESCE(account_number, ''), currency,
-			balance, COALESCE(opening_balance, 0),
-			is_active, COALESCE(notes, ''),
-			created_at, COALESCE(updated_at, created_at)
+			id, name,
+			CASE WHEN account_id IS NOT NULL THEN 'bank' ELSE 'petty_cash' END AS account_type,
+			COALESCE(code, ''), currency,
+			balance, balance AS opening_balance,
+			is_active, '' AS notes,
+			created_at, created_at AS updated_at
 		FROM cash_accounts
 		WHERE company_id = $1
 		ORDER BY name
@@ -83,10 +84,11 @@ func (h *TreasuryHandler) GetCashAccount(c *gin.Context) {
 		createdAt, updatedAt                          time.Time
 	)
 	err := h.db.QueryRow(ctx, `
-		SELECT id, name, COALESCE(account_type,'petty_cash'),
-		       COALESCE(account_number,''), currency, balance,
-		       COALESCE(opening_balance,0), is_active, COALESCE(notes,''),
-		       created_at, COALESCE(updated_at, created_at)
+		SELECT id, name,
+		       CASE WHEN account_id IS NOT NULL THEN 'bank' ELSE 'petty_cash' END,
+		       COALESCE(code,''), currency, balance,
+		       balance, is_active, '' AS notes,
+		       created_at, created_at AS updated_at
 		FROM cash_accounts WHERE id = $1 AND company_id = $2
 	`, id, companyID).Scan(
 		&accID, &name, &accType, &accNum, &currency,
@@ -131,11 +133,9 @@ func (h *TreasuryHandler) CreateCashAccount(c *gin.Context) {
 
 	_, err := h.db.Exec(ctx, `
 		INSERT INTO cash_accounts
-		  (id, company_id, name, account_type, account_number,
-		   currency, balance, opening_balance, is_active, notes)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$7,$8,$9)
-	`, id, companyID, req.Name, req.AccountType, req.AccountNumber,
-		req.Currency, req.OpeningBalance, true, req.Notes)
+		  (id, company_id, code, name, account_id, currency, balance, is_active)
+		VALUES ($1,$2,$3,$4,(SELECT id FROM chart_of_accounts WHERE company_id=$2 AND is_active AND code=$3 LIMIT 1),$5,$6,true)
+	`, id, companyID, req.AccountNumber, req.Name, req.Currency, req.OpeningBalance)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -162,15 +162,11 @@ func (h *TreasuryHandler) UpdateCashAccount(c *gin.Context) {
 	_, err := h.db.Exec(ctx, `
 		UPDATE cash_accounts
 		SET name = COALESCE(NULLIF($1,''), name),
-		    account_type = COALESCE(NULLIF($2,''), account_type),
-		    account_number = COALESCE(NULLIF($3,''), account_number),
-		    currency = COALESCE(NULLIF($4,''), currency),
-		    notes = $5,
-		    is_active = COALESCE($6, is_active),
-		    updated_at = NOW()
-		WHERE id = $7 AND company_id = $8
-	`, req.Name, req.AccountType, req.AccountNumber, req.Currency,
-		req.Notes, req.IsActive, id, companyID)
+		    code = COALESCE(NULLIF($2,''), code),
+		    currency = COALESCE(NULLIF($3,''), currency),
+		    is_active = COALESCE($4, is_active)
+		WHERE id = $5 AND company_id = $6
+	`, req.Name, req.AccountNumber, req.Currency, req.IsActive, id, companyID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -79,9 +79,9 @@
                 :class="[dk('hover:bg-gray-800/50','hover:bg-gray-50'), isOverdue(m) ? 'border-l-2 border-l-red-500' : '']"
                 class="transition-colors">
                 <td class="px-4 py-3 font-mono text-xs">{{ m.service_number }}</td>
-                <td class="px-4 py-3 font-medium text-sm">{{ m.vehicle_plate || m.vehicle_id }}</td>
+                <td class="px-4 py-3 font-medium text-sm">{{ m.plate_number }}</td>
                 <td class="px-4 py-3">
-                  <span :class="serviceTypeColor(m.service_type)" class="px-2 py-0.5 rounded text-xs">{{ formatEnum(m.service_type) }}</span>
+                  <span :class="serviceTypeColor(m.maintenance_type)" class="px-2 py-0.5 rounded text-xs">{{ formatEnum(m.maintenance_type) }}</span>
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-1.5">
@@ -91,7 +91,7 @@
                 </td>
                 <td class="px-4 py-3 text-xs">{{ m.scheduled_date || '—' }}</td>
                 <td class="px-4 py-3 text-xs">{{ m.completed_date || '—' }}</td>
-                <td class="px-4 py-3 text-xs">{{ m.technician_name || '—' }}</td>
+                <td class="px-4 py-3 text-xs">{{ m.technician || '—' }}</td>
                 <td class="px-4 py-3 text-right font-medium text-orange-400">{{ m.total_cost != null ? fmtDZD(m.total_cost) : '—' }}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center justify-end gap-1">
@@ -129,7 +129,8 @@
             </div>
             <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">Service Type <span class="text-red-400">*</span></label>
-              <select v-model="form.service_type" :class="inputCls">
+              <select v-model="form.maintenance_type" :class="inputCls">
+                <option value="routine">Routine</option>
                 <option value="preventive">Preventive</option>
                 <option value="corrective">Corrective</option>
                 <option value="inspection">Inspection</option>
@@ -162,11 +163,15 @@
             </div>
             <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">Mileage at Service</label>
-              <input v-model.number="form.mileage_at_service" type="number" :class="inputCls" />
+              <input v-model.number="form.mileage_at_fill" type="number" :class="inputCls" />
             </div>
             <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">Technician</label>
-              <input v-model="form.technician_name" :class="inputCls" placeholder="Technician name" />
+              <input v-model="form.technician" :class="inputCls" placeholder="Technician name" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1 text-gray-400">Garage / Workshop</label>
+              <input v-model="form.garage_name" :class="inputCls" placeholder="Garage name" />
             </div>
             <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">Labor Cost (DZD)</label>
@@ -182,7 +187,7 @@
             </div>
             <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">Next Service Mileage</label>
-              <input v-model.number="form.next_service_mileage" type="number" :class="inputCls" />
+              <input v-model.number="form.next_service_km" type="number" :class="inputCls" />
             </div>
             <div class="md:col-span-2">
               <label class="block text-xs font-medium mb-1 text-gray-400">Notes</label>
@@ -288,10 +293,10 @@ const statusFilters = [
 ]
 
 const defaultForm = () => ({
-  vehicle_id: '', service_type: 'preventive', title: '', status: 'scheduled',
-  scheduled_date: '', completed_date: '', mileage_at_service: null,
-  technician_name: '', labor_cost: null, parts_cost: null,
-  next_service_date: '', next_service_mileage: null, notes: '',
+  vehicle_id: '', maintenance_type: 'routine', title: '', status: 'scheduled',
+  scheduled_date: '', completed_date: '', mileage_at_fill: null,
+  technician: '', garage_name: '', labor_cost: null, parts_cost: null,
+  next_service_date: '', next_service_km: null, notes: '',
 })
 const form = ref(defaultForm())
 const completeForm = ref({ completed_date: new Date().toISOString().split('T')[0], labor_cost: 0, parts_cost: 0, notes: '' })
@@ -305,7 +310,7 @@ const filtered = computed(() => {
   if (statusFilter.value !== 'all') list = list.filter(m => m.status === statusFilter.value)
   if (search.value) {
     const q = search.value.toLowerCase()
-    list = list.filter(m => [m.vehicle_plate, m.title, m.technician_name, m.service_type].some(f => f?.toLowerCase().includes(q)))
+    list = list.filter(m => [m.plate_number, m.vehicle_name, m.title, m.technician, m.maintenance_type].some(f => f?.toLowerCase().includes(q)))
   }
   return list
 })
@@ -350,7 +355,7 @@ async function load() {
   loading.value = true
   try {
     const r = await fleetAPI.listFleetMaintenance()
-    records.value = r.data.items || r.data || []
+    records.value = r.data.maintenance || []
   } catch { app.addToast('Failed to load maintenance records', 'error') }
   finally { loading.value = false }
 }

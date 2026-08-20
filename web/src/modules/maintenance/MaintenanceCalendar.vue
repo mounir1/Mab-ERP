@@ -14,10 +14,11 @@ interface CalendarEvent {
   id: string
   title: string
   date: string
-  type: string          // order_type or 'schedule'
+  type: string          // 'order' | 'preventive' | 'warranty'
   status: string
-  equipment_name?: string
-  order_number?: string
+  order_type?: string
+  equipment?: string
+  number?: string
   color?: string
 }
 
@@ -75,7 +76,7 @@ const eventsByDay = computed(() => {
 })
 
 const typeCounts = computed(() => {
-  const types = ['corrective','preventive','inspection','emergency','upgrade','schedule']
+  const types = ['order','preventive','warranty']
   return types.map(t => ({ type: t, count: events.value.filter(e => e.type === t).length }))
     .filter(t => t.count > 0)
 })
@@ -84,13 +85,12 @@ const typeCounts = computed(() => {
 const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 
 const typeColor = (t: string) => ({
-  corrective:'#3b82f6', preventive:'#10b981',
-  inspection:'#8b5cf6', emergency:'#f43f5e',
-  upgrade:'#f59e0b',    schedule:'#06b6d4',
+  order:'#6366f1', preventive:'#22c55e', warranty:'#f59e0b',
 }[t] ?? '#64748b')
 
 const statusBadge = (s: string) => ({
-  pending:'bg-slate-500/15 text-slate-400',
+  draft:'bg-slate-500/15 text-slate-400',
+  planned:'bg-indigo-500/15 text-indigo-400',
   in_progress:'bg-blue-500/15 text-blue-400',
   on_hold:'bg-amber-500/15 text-amber-400',
   completed:'bg-emerald-500/15 text-emerald-400',
@@ -99,14 +99,12 @@ const statusBadge = (s: string) => ({
 }[s] ?? 'bg-slate-500/15 text-slate-400')
 
 const statusLabel = (s: string) => ({
-  pending:'Pending', in_progress:'In Progress', on_hold:'On Hold',
+  draft:'Draft', planned:'Planned', in_progress:'In Progress', on_hold:'On Hold',
   completed:'Completed', cancelled:'Cancelled', scheduled:'Scheduled'
 }[s] ?? s)
 
 const typeLabel = (t: string) => ({
-  corrective:'Corrective', preventive:'Preventive',
-  inspection:'Inspection', emergency:'Emergency',
-  upgrade:'Upgrade', schedule:'Schedule'
+  order:'Work Order', preventive:'Preventive', warranty:'Warranty',
 }[t] ?? t)
 
 const fmtDate = (s: string) =>
@@ -329,13 +327,17 @@ onMounted(load)
               </span>
             </div>
             <div class="space-y-2 text-sm">
-              <div v-if="selected.order_number" class="flex justify-between">
-                <span :class="dk('text-slate-400','text-slate-500')">Order #</span>
-                <span class="font-mono text-xs font-medium">{{ selected.order_number }}</span>
+              <div v-if="selected.order_type" class="flex justify-between">
+                <span :class="dk('text-slate-400','text-slate-500')">Type</span>
+                <span class="font-medium text-xs capitalize">{{ selected.order_type.replace('_', ' ') }}</span>
               </div>
-              <div v-if="selected.equipment_name" class="flex justify-between">
+              <div v-if="selected.number" class="flex justify-between">
+                <span :class="dk('text-slate-400','text-slate-500')">Order #</span>
+                <span class="font-mono text-xs font-medium">{{ selected.number }}</span>
+              </div>
+              <div v-if="selected.equipment" class="flex justify-between">
                 <span :class="dk('text-slate-400','text-slate-500')">Equipment</span>
-                <span class="font-medium text-xs">{{ selected.equipment_name }}</span>
+                <span class="font-medium text-xs">{{ selected.equipment }}</span>
               </div>
             </div>
             <button @click="showDetail=false"

@@ -781,8 +781,9 @@ func (h *SettingsHandler) ListFiscalYears(c *gin.Context) {
 	companyID := middleware.GetCompanyID(c)
 	ctx := context.Background()
 	rows, err := h.db.Query(ctx,
-		`SELECT id, name, start_date, end_date, status, is_current,
-		        closed_at, created_at
+		`SELECT id, name, start_date, end_date,
+		        CASE WHEN is_closed THEN 'closed' ELSE 'open' END AS status,
+		        is_closed, closed_at, created_at
 		 FROM fiscal_years WHERE company_id=$1 ORDER BY start_date DESC`,
 		companyID,
 	)
@@ -794,12 +795,13 @@ func (h *SettingsHandler) ListFiscalYears(c *gin.Context) {
 	var list []map[string]interface{}
 	for rows.Next() {
 		var id, name, status string
-		var isCurrent bool
+		var isClosed bool
 		var startDate, endDate, closedAt, createdAt interface{}
-		_ = rows.Scan(&id, &name, &startDate, &endDate, &status, &isCurrent, &closedAt, &createdAt)
+		_ = rows.Scan(&id, &name, &startDate, &endDate, &status, &isClosed, &closedAt, &createdAt)
 		list = append(list, map[string]interface{}{
 			"id": id, "name": name, "start_date": startDate, "end_date": endDate,
-			"status": status, "is_current": isCurrent,
+			"status": status, "is_current": !isClosed,
+			"is_closed": isClosed,
 			"closed_at": closedAt, "created_at": createdAt,
 		})
 	}
@@ -826,12 +828,12 @@ func (h *SettingsHandler) CreateFiscalYear(c *gin.Context) {
 	// If setting as current, unset others first
 	if req.IsCurrent {
 		_, _ = h.db.Exec(ctx,
-			`UPDATE fiscal_years SET is_current=false WHERE company_id=$1`, companyID)
+			`UPDATE fiscal_years SET is_closed=false WHERE company_id=$1`, companyID)
 	}
 	_, err := h.db.Exec(ctx,
-		`INSERT INTO fiscal_years (id, company_id, name, start_date, end_date, is_closed, status, is_current)
-		 VALUES ($1,$2,$3,$4,$5,false,'open',$6)`,
-		id, companyID, req.Name, req.StartDate, req.EndDate, req.IsCurrent,
+		`INSERT INTO fiscal_years (id, company_id, name, start_date, end_date, is_closed)
+		 VALUES ($1,$2,$3,$4,$5,false)`,
+		id, companyID, req.Name, req.StartDate, req.EndDate,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -848,7 +850,7 @@ func (h *SettingsHandler) CloseFiscalYear(c *gin.Context) {
 	companyID := middleware.GetCompanyID(c)
 	ctx := context.Background()
 	_, err := h.db.Exec(ctx,
-		`UPDATE fiscal_years SET status='closed', is_closed=true, is_current=false, closed_at=NOW()
+		`UPDATE fiscal_years SET is_closed=true, closed_at=NOW()
 		 WHERE id=$1 AND company_id=$2`,
 		id, companyID,
 	)

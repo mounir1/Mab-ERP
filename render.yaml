@@ -1,0 +1,35 @@
+# =============================================================================
+# Mab ERP — Render Blueprint (free tier)
+# See HOSTING_PLAN.md for the full plan + free-domain steps.
+#
+# Deploy:
+#   1. Push this repo to GitHub
+#   2. Render Dashboard -> Blueprint -> New Blueprint Instance -> select repo
+#   3. In the service -> Environment, fill in:
+#        DATABASE_URL  = Supabase/Neon Postgres connection string (sslmode=require)
+#        JWT_SECRET    = random string >= 32 chars
+#   4. Deploy. Health check hits /api/health automatically.
+#
+# NOTE: do not add a Render database here — Render's free Postgres is
+# discontinued/new instances expire. Use Supabase (free 500 MB) instead.
+# =============================================================================
+services:
+  - type: web
+    name: mab-erp
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: LOG_LEVEL
+        value: info
+      - key: CORS_ORIGINS
+        value: https://mab-erp.onrender.com
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false

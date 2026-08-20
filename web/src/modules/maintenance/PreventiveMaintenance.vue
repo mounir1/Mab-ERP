@@ -20,10 +20,12 @@ interface Plan {
   equipment_code?: string
   frequency_type: string
   frequency_value: number
-  estimated_duration?: number
+  estimated_hours?: number
   estimated_cost?: number
   assigned_to?: string
   instructions?: string
+  lead_days?: number
+  auto_create_order?: boolean
   is_active: boolean
   last_performed?: string
   next_due?: string
@@ -50,10 +52,12 @@ const form = ref({
   equipment_id: '',
   frequency_type: 'monthly',
   frequency_value: 1,
-  estimated_duration: '',
+  estimated_hours: '',
   estimated_cost: '',
   assigned_to: '',
   instructions: '',
+  lead_days: 7,
+  auto_create_order: false,
   is_active: true,
 })
 
@@ -130,7 +134,7 @@ const load = async () => {
   loading.value = true
   try {
     const res = await maintenanceAPI.listPreventivePlans()
-    plans.value = res.data.plans ?? res.data ?? []
+    plans.value = res.data.items ?? res.data ?? []
   } catch {
     app.addToast('Failed to load preventive plans', 'error')
   } finally {
@@ -141,7 +145,7 @@ const load = async () => {
 const loadEquipment = async () => {
   try {
     const res = await maintenanceAPI.listEquipment({ limit: '500' })
-    equipment.value = (res.data.equipment ?? res.data ?? []).map((e: any) => ({
+    equipment.value = (res.data.items ?? res.data ?? []).map((e: any) => ({
       id: e.id, name: e.name, code: e.code
     }))
   } catch { /* silent */ }
@@ -152,8 +156,9 @@ const openCreate = () => {
   form.value = {
     name: '', description: '', equipment_id: '',
     frequency_type: 'monthly', frequency_value: 1,
-    estimated_duration: '', estimated_cost: '',
-    assigned_to: '', instructions: '', is_active: true,
+    estimated_hours: '', estimated_cost: '',
+    assigned_to: '', instructions: '', lead_days: 7,
+    auto_create_order: false, is_active: true,
   }
   showCreate.value = true
 }
@@ -166,10 +171,12 @@ const openEdit = (p: Plan) => {
     equipment_id: p.equipment_id ?? '',
     frequency_type: p.frequency_type,
     frequency_value: p.frequency_value,
-    estimated_duration: p.estimated_duration?.toString() ?? '',
+    estimated_hours: p.estimated_hours?.toString() ?? '',
     estimated_cost: p.estimated_cost?.toString() ?? '',
     assigned_to: p.assigned_to ?? '',
     instructions: p.instructions ?? '',
+    lead_days: p.lead_days ?? 7,
+    auto_create_order: p.auto_create_order ?? false,
     is_active: p.is_active,
   }
   showEdit.value = true
@@ -186,8 +193,9 @@ const savePlan = async (isEdit: boolean) => {
     const payload = {
       ...form.value,
       frequency_value: Number(form.value.frequency_value),
-      estimated_duration: form.value.estimated_duration ? parseFloat(form.value.estimated_duration) : null,
+      estimated_hours: form.value.estimated_hours ? parseFloat(form.value.estimated_hours) : null,
       estimated_cost: form.value.estimated_cost ? parseFloat(form.value.estimated_cost) : null,
+      lead_days: Number(form.value.lead_days || 7),
     }
     if (isEdit && selected.value) {
       await maintenanceAPI.updatePreventivePlan(selected.value.id, payload)
@@ -363,8 +371,8 @@ onMounted(() => { load(); loadEquipment() })
           <span v-if="p.estimated_cost" class="px-2 py-0.5 rounded-md text-xs bg-teal-500/15 text-teal-400">
             {{ fmt(p.estimated_cost) }}
           </span>
-          <span v-if="p.estimated_duration" :class="['px-2 py-0.5 rounded-md text-xs', dk('bg-slate-700 text-slate-300','bg-slate-200 text-slate-600')]">
-            {{ p.estimated_duration }}h
+          <span v-if="p.estimated_hours" :class="['px-2 py-0.5 rounded-md text-xs', dk('bg-slate-700 text-slate-300','bg-slate-200 text-slate-600')]">
+            {{ p.estimated_hours }}h
           </span>
         </div>
 
@@ -448,7 +456,7 @@ onMounted(() => { load(); loadEquipment() })
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label :class="['block text-xs font-medium mb-1.5', dk('text-slate-400','text-slate-600')]">Est. Duration (hours)</label>
-                <input v-model="form.estimated_duration" type="number" step="0.5" min="0" placeholder="0"
+                <input v-model="form.estimated_hours" type="number" step="0.5" min="0" placeholder="0"
                   :class="['w-full px-3 py-2 rounded-lg border text-sm',
                     dk('bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500',
                        'bg-white border-slate-200 text-slate-900 placeholder-slate-400')]" />
@@ -461,12 +469,29 @@ onMounted(() => { load(); loadEquipment() })
                        'bg-white border-slate-200 text-slate-900 placeholder-slate-400')]" />
               </div>
             </div>
-            <div>
-              <label :class="['block text-xs font-medium mb-1.5', dk('text-slate-400','text-slate-600')]">Assigned To</label>
-              <input v-model="form.assigned_to" placeholder="Technician or team name"
-                :class="['w-full px-3 py-2 rounded-lg border text-sm',
-                  dk('bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500',
-                     'bg-white border-slate-200 text-slate-900 placeholder-slate-400')]" />
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label :class="['block text-xs font-medium mb-1.5', dk('text-slate-400','text-slate-600')]">Assigned To</label>
+                <input v-model="form.assigned_to" placeholder="Technician or team name"
+                  :class="['w-full px-3 py-2 rounded-lg border text-sm',
+                    dk('bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500',
+                       'bg-white border-slate-200 text-slate-900 placeholder-slate-400')]" />
+              </div>
+              <div>
+                <label :class="['block text-xs font-medium mb-1.5', dk('text-slate-400','text-slate-600')]">Lead Days</label>
+                <input v-model.number="form.lead_days" type="number" min="0" placeholder="7"
+                  :class="['w-full px-3 py-2 rounded-lg border text-sm',
+                    dk('bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500',
+                       'bg-white border-slate-200 text-slate-900 placeholder-slate-400')]" />
+              </div>
+            </div>
+            <!-- Auto-create order toggle -->
+            <div class="flex items-center gap-3">
+              <button @click="form.auto_create_order = !form.auto_create_order"
+                :class="['p-1 rounded transition-colors', form.auto_create_order ? 'text-emerald-400' : dk('text-slate-600','text-slate-400')]">
+                <component :is="form.auto_create_order ? ToggleRight : ToggleLeft" class="w-7 h-7" />
+              </button>
+              <span class="text-sm font-medium">Auto-create work order when due</span>
             </div>
             <!-- Active toggle -->
             <div class="flex items-center gap-3">

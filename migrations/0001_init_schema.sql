@@ -1411,17 +1411,6 @@ CREATE TABLE notifications (
 CREATE INDEX idx_notifications_user ON notifications(user_id, is_read);
 
 -- =============================================================================
--- MIGRATION TRACKING
--- =============================================================================
-
-CREATE TABLE IF NOT EXISTS schema_migrations (
-    version     VARCHAR(50) PRIMARY KEY,
-    applied_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-INSERT INTO schema_migrations (version) VALUES ('0001_init_schema') ON CONFLICT DO NOTHING;
-
--- =============================================================================
 -- DEFAULT DATA — Super Tenant + Admin User
 -- =============================================================================
 

@@ -63,7 +63,7 @@
                 <th class="px-4 py-3 text-left font-medium">Status</th>
                 <th class="px-4 py-3 text-left font-medium">Phone</th>
                 <th class="px-4 py-3 text-left font-medium">License Expiry</th>
-                <th class="px-4 py-3 text-left font-medium">Medical Expiry</th>
+                <th class="px-4 py-3 text-left font-medium">Hire Date</th>
                 <th class="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
@@ -83,7 +83,7 @@
                 class="transition-colors">
                 <td class="px-4 py-3">
                   <div class="font-medium">{{ d.full_name }}</div>
-                  <div :class="dk('text-gray-400','text-gray-500')" class="text-xs">{{ d.employee_id || d.code }}</div>
+                  <div :class="dk('text-gray-400','text-gray-500')" class="text-xs">{{ d.license_number }}</div>
                 </td>
                 <td class="px-4 py-3 font-mono text-xs">{{ d.license_number }}</td>
                 <td class="px-4 py-3">
@@ -97,7 +97,7 @@
                   <span :class="expiryClass(d.license_expiry)" class="text-xs">{{ d.license_expiry || '—' }}</span>
                 </td>
                 <td class="px-4 py-3">
-                  <span :class="expiryClass(d.medical_expiry)" class="text-xs">{{ d.medical_expiry || '—' }}</span>
+                  <span class="text-xs">{{ d.hire_date || '—' }}</span>
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex items-center justify-end gap-1">
@@ -129,12 +129,12 @@
           </div>
           <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">Full Name <span class="text-red-400">*</span></label>
-              <input v-model="form.full_name" :class="inputCls" placeholder="Ahmed Ben Ali" required />
+              <label class="block text-xs font-medium mb-1 text-gray-400">First Name <span class="text-red-400">*</span></label>
+              <input v-model="form.first_name" :class="inputCls" placeholder="Tarek" required />
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">Employee ID</label>
-              <input v-model="form.employee_id" :class="inputCls" placeholder="EMP-001" />
+              <label class="block text-xs font-medium mb-1 text-gray-400">Last Name <span class="text-red-400">*</span></label>
+              <input v-model="form.last_name" :class="inputCls" placeholder="Bouzid" required />
             </div>
             <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">License Number <span class="text-red-400">*</span></label>
@@ -148,6 +148,10 @@
                 <option value="D">D — Bus</option>
                 <option value="E">E — Heavy</option>
                 <option value="A">A — Motorcycle</option>
+                <option value="B1">B1</option>
+                <option value="C1">C1</option>
+                <option value="D1">D1</option>
+                <option value="other">Other</option>
               </select>
             </div>
             <div>
@@ -155,12 +159,16 @@
               <input v-model="form.license_expiry" type="date" :class="inputCls" />
             </div>
             <div>
+              <label class="block text-xs font-medium mb-1 text-gray-400">License Issue Date</label>
+              <input v-model="form.license_issue_date" type="date" :class="inputCls" />
+            </div>
+            <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">Status</label>
               <select v-model="form.status" :class="inputCls">
-                <option value="available">Available</option>
-                <option value="on_duty">On Duty</option>
-                <option value="off_duty">Off Duty</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
                 <option value="on_leave">On Leave</option>
+                <option value="suspended">Suspended</option>
                 <option value="terminated">Terminated</option>
               </select>
             </div>
@@ -173,20 +181,20 @@
               <input v-model="form.email" type="email" :class="inputCls" placeholder="driver@example.com" />
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">Date of Birth</label>
-              <input v-model="form.date_of_birth" type="date" :class="inputCls" />
-            </div>
-            <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">National ID</label>
               <input v-model="form.national_id" :class="inputCls" placeholder="National ID number" />
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">Medical Expiry</label>
-              <input v-model="form.medical_expiry" type="date" :class="inputCls" />
-            </div>
-            <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">Hire Date</label>
               <input v-model="form.hire_date" type="date" :class="inputCls" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1 text-gray-400">Emergency Contact</label>
+              <input v-model="form.emergency_contact" :class="inputCls" placeholder="Contact name" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1 text-gray-400">Emergency Phone</label>
+              <input v-model="form.emergency_phone" :class="inputCls" placeholder="Contact phone" />
             </div>
             <div class="md:col-span-2">
               <label class="block text-xs font-medium mb-1 text-gray-400">Address</label>
@@ -255,16 +263,16 @@ const deleteItem = ref<any>(null)
 
 const statusFilters = [
   { value: 'all', label: 'All' },
-  { value: 'available', label: 'Available' },
-  { value: 'on_duty', label: 'On Duty' },
-  { value: 'off_duty', label: 'Off Duty' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
   { value: 'on_leave', label: 'On Leave' },
+  { value: 'suspended', label: 'Suspended' },
 ]
 
 const defaultForm = () => ({
-  full_name: '', employee_id: '', license_number: '', license_class: 'B',
-  license_expiry: '', status: 'available', phone: '', email: '',
-  date_of_birth: '', national_id: '', medical_expiry: '', hire_date: '', address: '', notes: '',
+  first_name: '', last_name: '', license_number: '', license_class: 'B',
+  license_expiry: '', license_issue_date: '', status: 'active', phone: '', email: '',
+  national_id: '', hire_date: '', address: '', emergency_contact: '', emergency_phone: '', notes: '',
 })
 const form = ref(defaultForm())
 
@@ -278,20 +286,20 @@ const filtered = computed(() => {
   if (statusFilter.value !== 'all') list = list.filter(d => d.status === statusFilter.value)
   if (search.value) {
     const q = search.value.toLowerCase()
-    list = list.filter(d => [d.full_name, d.license_number, d.phone, d.employee_id].some(f => f?.toLowerCase().includes(q)))
+    list = list.filter(d => [d.full_name, d.first_name, d.last_name, d.license_number, d.phone].some(f => f?.toLowerCase().includes(q)))
   }
   return list
 })
 
 const kpis = computed(() => {
   const total = drivers.value.length
-  const available = drivers.value.filter(d => d.status === 'available').length
-  const onDuty = drivers.value.filter(d => d.status === 'on_duty').length
+  const active = drivers.value.filter(d => d.status === 'active').length
+  const onLeave = drivers.value.filter(d => d.status === 'on_leave').length
   const expiring = drivers.value.filter(d => isExpiringSoon(d.license_expiry)).length
   return [
     { label: 'Total Drivers', value: total, icon: Users, color: 'text-indigo-400', sub: null, subColor: '' },
-    { label: 'Available', value: available, icon: BadgeCheck, color: 'text-green-400', sub: null, subColor: '' },
-    { label: 'On Duty', value: onDuty, icon: UserCheck, color: 'text-blue-400', sub: null, subColor: '' },
+    { label: 'Active', value: active, icon: BadgeCheck, color: 'text-green-400', sub: null, subColor: '' },
+    { label: 'On Leave', value: onLeave, icon: UserCheck, color: 'text-blue-400', sub: null, subColor: '' },
     { label: 'License Expiring', value: expiring, icon: ShieldAlert, color: 'text-amber-400', sub: expiring > 0 ? 'Within 30 days' : null, subColor: 'text-amber-400' },
   ]
 })
@@ -311,10 +319,10 @@ function expiryClass(date: string) {
 }
 function statusColor(s: string) {
   const m: Record<string, string> = {
-    available: 'bg-green-500/15 text-green-400',
-    on_duty: 'bg-blue-500/15 text-blue-400',
-    off_duty: 'bg-gray-500/15 text-gray-400',
+    active: 'bg-green-500/15 text-green-400',
+    inactive: 'bg-gray-500/15 text-gray-400',
     on_leave: 'bg-amber-500/15 text-amber-400',
+    suspended: 'bg-orange-500/15 text-orange-400',
     terminated: 'bg-red-500/15 text-red-400',
   }
   return m[s] || 'bg-gray-500/15 text-gray-400'
@@ -324,7 +332,7 @@ async function load() {
   loading.value = true
   try {
     const r = await fleetAPI.listDrivers()
-    drivers.value = r.data.items || r.data || []
+    drivers.value = r.data.drivers || []
   } catch { app.addToast('Failed to load drivers', 'error') }
   finally { loading.value = false }
 }
@@ -334,8 +342,8 @@ function openEdit(d: any) { editing.value = d; form.value = { ...defaultForm(), 
 function openDelete(d: any) { deleteItem.value = d; showDelete.value = true }
 
 async function saveDriver() {
-  if (!form.value.full_name || !form.value.license_number) {
-    app.addToast('Full name and license number are required', 'error'); return
+  if (!form.value.first_name || !form.value.last_name || !form.value.license_number) {
+    app.addToast('First name, last name, and license number are required', 'error'); return
   }
   saving.value = true
   try {

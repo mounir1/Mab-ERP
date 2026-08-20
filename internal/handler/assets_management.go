@@ -244,10 +244,10 @@ func (h *AssetsHandler) ListAssets(c *gin.Context) {
 		       COALESCE(fa.location_id::text,''), COALESCE(al.name,''),
 		       fa.purchase_cost, fa.salvage_value, fa.useful_life_years,
 		       fa.depreciation_rate, fa.accumulated_depreciation, fa.net_book_value,
-		       fa.purchase_date, COALESCE(fa.in_service_date,''),
+		       fa.purchase_date, fa.depreciation_start AS in_service_date,
 		       COALESCE(fa.serial_number,''), COALESCE(fa.model,''),
-		       COALESCE(fa.manufacturer,''), COALESCE(fa.warranty_expiry_date,''),
-		       COALESCE(fa.notes,''), fa.is_depreciable, fa.created_at
+		       COALESCE(fa.brand,''), COALESCE(fa.warranty_expiry::text,''),
+		       COALESCE(fa.notes,''), (fa.useful_life_years > 0) AS is_depreciable, fa.created_at
 		FROM fixed_assets fa
 		LEFT JOIN asset_categories ac ON ac.id = fa.category_id
 		LEFT JOIN asset_locations al ON al.id = fa.location_id
@@ -319,10 +319,10 @@ func (h *AssetsHandler) GetAsset(c *gin.Context) {
 		       COALESCE(fa.location_id::text,''), COALESCE(al.name,''),
 		       fa.purchase_cost, fa.salvage_value, fa.useful_life_years,
 		       fa.depreciation_rate, fa.accumulated_depreciation, fa.net_book_value,
-		       fa.purchase_date, COALESCE(fa.in_service_date,''),
+		       fa.purchase_date, fa.depreciation_start AS in_service_date,
 		       COALESCE(fa.serial_number,''), COALESCE(fa.model,''),
-		       COALESCE(fa.manufacturer,''), COALESCE(fa.warranty_expiry_date,''),
-		       COALESCE(fa.notes,''), fa.is_depreciable,
+		       COALESCE(fa.brand,''), COALESCE(fa.warranty_expiry::text,''),
+		       COALESCE(fa.notes,''), (fa.useful_life_years > 0) AS is_depreciable,
 		       fa.created_at, fa.updated_at
 		FROM fixed_assets fa
 		LEFT JOIN asset_categories ac ON ac.id = fa.category_id
@@ -430,9 +430,9 @@ func (h *AssetsHandler) CreateAsset(c *gin.Context) {
 			category_id, location_id, status, condition,
 			purchase_cost, salvage_value, useful_life_years,
 			depreciation_method, depreciation_rate, accumulated_depreciation,
-			purchase_date, in_service_date,
-			serial_number, model, manufacturer, warranty_expiry_date,
-			notes, is_depreciable
+			purchase_date, depreciation_start,
+			serial_number, model, brand, warranty_expiry,
+			notes
 		) VALUES (
 			$1,$2,$3,$4,$5,
 			$6,$7,$8::asset_status,$9::asset_condition,
@@ -440,7 +440,7 @@ func (h *AssetsHandler) CreateAsset(c *gin.Context) {
 			$13::depreciation_method,$14,0,
 			$15,$16,
 			$17,$18,$19,$20,
-			$21,$22
+			$21
 		)`,
 		id, companyID, assetNumber,
 		strVal(req, "name"), strVal(req, "description"),
@@ -455,7 +455,6 @@ func (h *AssetsHandler) CreateAsset(c *gin.Context) {
 		strVal(req, "manufacturer"),
 		assetNullableStr(strVal(req, "warranty_expiry_date")),
 		strVal(req, "notes"),
-		assetBoolValDefault(req, "is_depreciable", true),
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -496,11 +495,11 @@ func (h *AssetsHandler) UpdateAsset(c *gin.Context) {
 			status = $5::asset_status, condition = $6::asset_condition,
 			purchase_cost = $7, salvage_value = $8, useful_life_years = $9,
 			depreciation_method = $10::depreciation_method, depreciation_rate = $11,
-			purchase_date = $12, in_service_date = $13,
-			serial_number = $14, model = $15, manufacturer = $16,
-			warranty_expiry_date = $17, notes = $18, is_depreciable = $19,
+			purchase_date = $12, depreciation_start = $13,
+			serial_number = $14, model = $15, brand = $16,
+			warranty_expiry = $17, notes = $18,
 			updated_at = NOW()
-		WHERE id = $20 AND company_id = $21
+		WHERE id = $19 AND company_id = $20
 	`,
 		strVal(req, "name"), strVal(req, "description"),
 		nullUUIDAsset(strVal(req, "category_id")),
@@ -514,7 +513,6 @@ func (h *AssetsHandler) UpdateAsset(c *gin.Context) {
 		strVal(req, "manufacturer"),
 		assetNullableStr(strVal(req, "warranty_expiry_date")),
 		strVal(req, "notes"),
-		assetBoolValDefault(req, "is_depreciable", true),
 		id, companyID,
 	)
 	if err != nil {
@@ -746,7 +744,7 @@ func (h *AssetsHandler) ListLocations(c *gin.Context) {
 	ctx := context.Background()
 
 	rows, err := h.db.Query(ctx, `
-		SELECT al.id, al.name, COALESCE(al.code,''), COALESCE(al.description,''),
+		SELECT al.id, al.name, '' AS code, COALESCE(al.description,''),
 		       COALESCE(al.address,''), COALESCE(al.city,''), COALESCE(al.country,''),
 		       COALESCE(al.parent_id::text,''), COALESCE(p.name,''),
 		       al.is_active,
@@ -757,7 +755,7 @@ func (h *AssetsHandler) ListLocations(c *gin.Context) {
 		LEFT JOIN asset_locations p ON p.id = al.parent_id
 		LEFT JOIN fixed_assets fa ON fa.location_id = al.id AND fa.company_id = $1
 		WHERE al.company_id = $1
-		GROUP BY al.id, al.name, al.code, al.description, al.address,
+		GROUP BY al.id, al.name, al.description, al.address,
 		         al.city, al.country, al.parent_id, p.name, al.is_active, al.created_at
 		ORDER BY al.name
 	`, companyID)
@@ -805,11 +803,11 @@ func (h *AssetsHandler) CreateLocation(c *gin.Context) {
 
 	_, err := h.db.Exec(ctx, `
 		INSERT INTO asset_locations (
-			id, company_id, name, code, description,
+			id, company_id, name, description,
 			address, city, country, parent_id, is_active
-		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
 	`, id, companyID,
-		strVal(req, "name"), strVal(req, "code"), strVal(req, "description"),
+		strVal(req, "name"), strVal(req, "description"),
 		strVal(req, "address"), strVal(req, "city"), strVal(req, "country"),
 		nullUUIDAsset(strVal(req, "parent_id")),
 		assetBoolValDefault(req, "is_active", true),
@@ -835,12 +833,12 @@ func (h *AssetsHandler) UpdateLocation(c *gin.Context) {
 
 	_, err := h.db.Exec(ctx, `
 		UPDATE asset_locations SET
-			name = $1, code = $2, description = $3,
-			address = $4, city = $5, country = $6,
-			parent_id = $7, is_active = $8, updated_at = NOW()
-		WHERE id = $9 AND company_id = $10
+			name = $1, description = $2,
+			address = $3, city = $4, country = $5,
+			parent_id = $6, is_active = $7, updated_at = NOW()
+		WHERE id = $8 AND company_id = $9
 	`,
-		strVal(req, "name"), strVal(req, "code"), strVal(req, "description"),
+		strVal(req, "name"), strVal(req, "description"),
 		strVal(req, "address"), strVal(req, "city"), strVal(req, "country"),
 		nullUUIDAsset(strVal(req, "parent_id")),
 		assetBoolValDefault(req, "is_active", true),
@@ -907,7 +905,7 @@ func (h *AssetsHandler) ListTransfers(c *gin.Context) {
 		       COALESCE(at2.to_location_id::text,''), COALESCE(tl.name,''),
 		       at2.status::text, at2.transfer_date,
 		       COALESCE(at2.reason,''), COALESCE(at2.notes,''),
-		       COALESCE(at2.approved_by::text,''), COALESCE(at2.approved_at,''),
+		       COALESCE(at2.approved_by::text,''), COALESCE(at2.approved_at::text,''),
 		       at2.created_at
 		FROM asset_transfers at2
 		JOIN fixed_assets fa ON fa.id = at2.asset_id
@@ -1380,11 +1378,11 @@ func (h *AssetsHandler) ListMaintenance(c *gin.Context) {
 	rows, err := h.db.Query(ctx, `
 		SELECT amr.id, amr.asset_id, fa.asset_number, fa.name,
 		       amr.maintenance_type::text, amr.status::text,
-		       amr.scheduled_date, amr.completed_date,
-		       COALESCE(amr.description,''), COALESCE(amr.technician,''),
+		       amr.scheduled_date, amr.completed_at::date AS completed_date,
+		       COALESCE(amr.description,''), COALESCE(amr.performed_by,'') AS technician,
 		       COALESCE(amr.vendor,''), amr.cost,
-		       COALESCE(amr.parts_used,''), COALESCE(amr.notes,''),
-		       COALESCE(amr.next_maintenance_date,''),
+		       COALESCE(amr.parts_replaced,'') AS parts_used, COALESCE(amr.actions_taken,'') AS notes,
+		       COALESCE(amr.next_maintenance_date::text,''),
 		       amr.created_at
 		FROM asset_maintenance_records amr
 		JOIN fixed_assets fa ON fa.id = amr.asset_id
@@ -1447,9 +1445,9 @@ func (h *AssetsHandler) CreateMaintenance(c *gin.Context) {
 	_, err := h.db.Exec(ctx, `
 		INSERT INTO asset_maintenance_records (
 			id, company_id, asset_id, maintenance_type, status,
-			scheduled_date, completed_date,
-			description, technician, vendor, cost,
-			parts_used, notes, next_maintenance_date
+			scheduled_date, completed_at,
+			description, performed_by, vendor, cost,
+			parts_replaced, actions_taken, next_maintenance_date
 		) VALUES (
 			$1,$2,$3,$4::maintenance_type,$5::maintenance_status,
 			$6,$7,$8,$9,$10,$11,$12,$13,$14
@@ -1492,10 +1490,10 @@ func (h *AssetsHandler) UpdateMaintenance(c *gin.Context) {
 			maintenance_type = $1::maintenance_type,
 			status = $2::maintenance_status,
 			scheduled_date = $3,
-			completed_date = $4,
+			completed_at = $4,
 			description = $5,
-			technician = $6, vendor = $7, cost = $8,
-			parts_used = $9, notes = $10,
+			performed_by = $6, vendor = $7, cost = $8,
+			parts_replaced = $9, actions_taken = $10,
 			next_maintenance_date = $11,
 			updated_at = NOW()
 		WHERE id = $12 AND company_id = $13
@@ -1540,8 +1538,8 @@ func (h *AssetsHandler) CompleteMaintenance(c *gin.Context) {
 	_, err := h.db.Exec(ctx, `
 		UPDATE asset_maintenance_records SET
 			status = 'completed'::maintenance_status,
-			completed_date = $1,
-			cost = $2, notes = $3,
+			completed_at = $1,
+			cost = $2, actions_taken = $3,
 			next_maintenance_date = $4,
 			updated_at = NOW()
 		WHERE id = $5 AND company_id = $6
@@ -1597,7 +1595,7 @@ func (h *AssetsHandler) GetReports(c *gin.Context) {
 			       fa.purchase_date, fa.purchase_cost,
 			       fa.accumulated_depreciation, fa.net_book_value,
 			       fa.depreciation_method::text, fa.useful_life_years,
-			       COALESCE(fa.serial_number,''), COALESCE(fa.manufacturer,'')
+			       COALESCE(fa.serial_number,''), COALESCE(fa.brand,'')
 			FROM fixed_assets fa
 			LEFT JOIN asset_categories ac ON ac.id = fa.category_id
 			LEFT JOIN asset_locations al ON al.id = fa.location_id

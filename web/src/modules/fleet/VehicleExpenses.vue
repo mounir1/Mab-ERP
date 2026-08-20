@@ -49,7 +49,7 @@
       <div :class="dk('bg-gray-900 border-gray-800','bg-white border-gray-200')+ ' border rounded-xl p-4 flex flex-wrap gap-3 items-center'">
         <div class="relative flex-1 min-w-48">
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input v-model="search" placeholder="Search vehicle, vendor, description…"
+          <input v-model="search" placeholder="Search vehicle, driver, description…"
             :class="dk('bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-500','bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400')+ ' border rounded-lg pl-9 pr-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-rose-500'" />
         </div>
         <select v-model="typeFilter" :class="dk('bg-gray-800 border-gray-700 text-gray-100','bg-gray-50 border-gray-300 text-gray-900')+ ' border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500'">
@@ -72,9 +72,9 @@
                 <th class="px-4 py-3 text-left font-medium">Vehicle</th>
                 <th class="px-4 py-3 text-left font-medium">Type</th>
                 <th class="px-4 py-3 text-left font-medium">Description</th>
-                <th class="px-4 py-3 text-left font-medium">Vendor</th>
+                <th class="px-4 py-3 text-left font-medium">Driver</th>
                 <th class="px-4 py-3 text-right font-medium">Amount</th>
-                <th class="px-4 py-3 text-left font-medium">Receipt</th>
+                <th class="px-4 py-3 text-left font-medium">Reference</th>
                 <th class="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
@@ -91,14 +91,14 @@
               </tr>
               <tr v-for="e in filtered" :key="e.id" :class="dk('hover:bg-gray-800/50','hover:bg-gray-50')" class="transition-colors">
                 <td class="px-4 py-3 text-xs">{{ e.expense_date }}</td>
-                <td class="px-4 py-3 font-medium text-sm">{{ e.vehicle_plate || e.vehicle_id }}</td>
+                <td class="px-4 py-3 font-medium text-sm">{{ e.plate_number }}</td>
                 <td class="px-4 py-3">
                   <span :class="typeColor(e.expense_type)" class="px-2 py-0.5 rounded text-xs">{{ formatEnum(e.expense_type) }}</span>
                 </td>
                 <td class="px-4 py-3 text-xs max-w-40 truncate">{{ e.description || '—' }}</td>
-                <td class="px-4 py-3 text-xs">{{ e.vendor_name || '—' }}</td>
+                <td class="px-4 py-3 text-xs">{{ e.driver_name || '—' }}</td>
                 <td class="px-4 py-3 text-right font-semibold text-rose-400">{{ fmtDZD(e.amount) }}</td>
-                <td class="px-4 py-3 text-xs">{{ e.receipt_number || '—' }}</td>
+                <td class="px-4 py-3 text-xs">{{ e.reference_number || '—' }}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center justify-end gap-1">
                     <button @click="openEdit(e)" :class="dk('hover:bg-gray-700','hover:bg-gray-100')" class="p-1.5 rounded transition-colors">
@@ -156,16 +156,12 @@
               <input v-model="form.description" :class="inputCls" placeholder="Brief description" />
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">Vendor Name</label>
-              <input v-model="form.vendor_name" :class="inputCls" placeholder="Supplier / vendor" />
+              <label class="block text-xs font-medium mb-1 text-gray-400">Driver ID</label>
+              <input v-model="form.driver_id" :class="inputCls" placeholder="Driver UUID" />
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">Receipt Number</label>
-              <input v-model="form.receipt_number" :class="inputCls" />
-            </div>
-            <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">Approved By</label>
-              <input v-model="form.approved_by" :class="inputCls" />
+              <label class="block text-xs font-medium mb-1 text-gray-400">Reference Number</label>
+              <input v-model="form.reference_number" :class="inputCls" />
             </div>
             <div class="md:col-span-2">
               <label class="block text-xs font-medium mb-1 text-gray-400">Notes</label>
@@ -229,9 +225,9 @@ const deleteItem = ref<any>(null)
 const expenseTypes = ['fuel','maintenance','insurance','registration','toll','parking','repair','cleaning','other']
 
 const defaultForm = () => ({
-  vehicle_id: '', expense_date: new Date().toISOString().split('T')[0],
+  vehicle_id: '', driver_id: '', expense_date: new Date().toISOString().split('T')[0],
   expense_type: 'fuel', amount: null, description: '',
-  vendor_name: '', receipt_number: '', approved_by: '', notes: '',
+  reference_number: '', notes: '',
 })
 const form = ref(defaultForm())
 
@@ -246,7 +242,7 @@ const filtered = computed(() => {
   if (dateTo.value) list = list.filter(e => e.expense_date <= dateTo.value)
   if (search.value) {
     const q = search.value.toLowerCase()
-    list = list.filter(e => [e.vehicle_plate, e.vendor_name, e.description, e.receipt_number].some(f => f?.toLowerCase().includes(q)))
+    list = list.filter(e => [e.plate_number, e.vehicle_name, e.driver_name, e.description, e.reference_number].some(f => f?.toLowerCase().includes(q)))
   }
   return list
 })
@@ -299,7 +295,7 @@ async function load() {
   loading.value = true
   try {
     const r = await fleetAPI.listExpenses()
-    expenses.value = r.data.items || r.data || []
+    expenses.value = r.data.expenses || []
   } catch { app.addToast('Failed to load expenses', 'error') }
   finally { loading.value = false }
 }

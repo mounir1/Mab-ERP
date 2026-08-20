@@ -77,9 +77,10 @@
                 </td>
               </tr>
               <tr v-for="a in filtered" :key="a.id" :class="dk('hover:bg-gray-800/50','hover:bg-gray-50')" class="transition-colors">
-                <td class="px-4 py-3 font-mono text-xs">{{ a.assignment_number }}</td>
+                <td class="px-4 py-3 font-mono text-xs">{{ a.id.slice(0, 8) }}</td>
                 <td class="px-4 py-3">
-                  <div class="font-medium text-sm">{{ a.vehicle_plate || a.vehicle_id }}</div>
+                  <div class="font-medium text-sm">{{ a.plate_number }}</div>
+                  <div class="text-xs" :class="dk('text-gray-400','text-gray-500')">{{ a.vehicle_name }}</div>
                 </td>
                 <td class="px-4 py-3">{{ a.driver_name || a.driver_id }}</td>
                 <td class="px-4 py-3">
@@ -88,8 +89,8 @@
                 <td class="px-4 py-3 text-xs">{{ a.start_date }}</td>
                 <td class="px-4 py-3 text-xs">{{ a.end_date || '—' }}</td>
                 <td class="px-4 py-3 text-xs max-w-32 truncate">{{ a.purpose || '—' }}</td>
-                <td class="px-4 py-3 text-xs">{{ a.start_mileage != null ? a.start_mileage.toLocaleString() : '—' }}</td>
-                <td class="px-4 py-3 text-xs">{{ a.end_mileage != null ? a.end_mileage.toLocaleString() : '—' }}</td>
+                <td class="px-4 py-3 text-xs">{{ a.start_odometer != null ? a.start_odometer.toLocaleString() : '—' }}</td>
+                <td class="px-4 py-3 text-xs">{{ a.end_odometer != null ? a.end_odometer.toLocaleString() : '—' }}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center justify-end gap-1">
                     <button @click="openEdit(a)" :class="dk('hover:bg-gray-700','hover:bg-gray-100')" class="p-1.5 rounded transition-colors">
@@ -146,20 +147,16 @@
               <input v-model="form.purpose" :class="inputCls" placeholder="Business trip, delivery…" />
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">Start Mileage (km)</label>
-              <input v-model.number="form.start_mileage" type="number" :class="inputCls" />
+              <label class="block text-xs font-medium mb-1 text-gray-400">Start Odometer (km)</label>
+              <input v-model.number="form.start_odometer" type="number" :class="inputCls" />
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">End Mileage (km)</label>
-              <input v-model.number="form.end_mileage" type="number" :class="inputCls" />
+              <label class="block text-xs font-medium mb-1 text-gray-400">End Odometer (km)</label>
+              <input v-model.number="form.end_odometer" type="number" :class="inputCls" />
             </div>
             <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">Destination</label>
               <input v-model="form.destination" :class="inputCls" placeholder="City or location" />
-            </div>
-            <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">Approved By</label>
-              <input v-model="form.approved_by" :class="inputCls" placeholder="Manager name" />
             </div>
             <div class="md:col-span-2">
               <label class="block text-xs font-medium mb-1 text-gray-400">Notes</label>
@@ -186,7 +183,7 @@
             <div class="p-2 rounded-full bg-red-500/20"><AlertTriangle class="w-5 h-5 text-red-400" /></div>
             <h2 class="text-lg font-semibold">Delete Assignment</h2>
           </div>
-          <p :class="dk('text-gray-400','text-gray-600')" class="text-sm mb-6">Delete assignment <strong>{{ deleteItem.assignment_number }}</strong>?</p>
+          <p :class="dk('text-gray-400','text-gray-600')" class="text-sm mb-6">Delete assignment <strong>{{ deleteItem.id.slice(0, 8) }}</strong>?</p>
           <div class="flex justify-end gap-3">
             <button @click="showDelete = false" :class="dk('bg-gray-800 hover:bg-gray-700 text-gray-300','bg-gray-100 hover:bg-gray-200 text-gray-700')" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors">Cancel</button>
             <button @click="confirmDelete" :disabled="saving" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2">
@@ -227,7 +224,7 @@ const statusFilters = [
 
 const defaultForm = () => ({
   vehicle_id: '', driver_id: '', start_date: '', end_date: '', status: 'active',
-  purpose: '', start_mileage: null, end_mileage: null, destination: '', approved_by: '', notes: '',
+  purpose: '', start_odometer: null, end_odometer: null, destination: '', notes: '',
 })
 const form = ref(defaultForm())
 
@@ -240,7 +237,7 @@ const filtered = computed(() => {
   if (statusFilter.value !== 'all') list = list.filter(a => a.status === statusFilter.value)
   if (search.value) {
     const q = search.value.toLowerCase()
-    list = list.filter(a => [a.vehicle_plate, a.driver_name, a.purpose, a.assignment_number].some(f => f?.toLowerCase().includes(q)))
+    list = list.filter(a => [a.plate_number, a.vehicle_name, a.driver_name, a.purpose, a.id].some(f => f?.toLowerCase().includes(q)))
   }
   return list
 })
@@ -266,7 +263,7 @@ async function load() {
   loading.value = true
   try {
     const r = await fleetAPI.listAssignments()
-    assignments.value = r.data.items || r.data || []
+    assignments.value = r.data.assignments || []
   } catch { app.addToast('Failed to load assignments', 'error') }
   finally { loading.value = false }
 }

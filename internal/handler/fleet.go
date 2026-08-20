@@ -174,7 +174,7 @@ func (h *FleetHandler) ListVehicles(c *gin.Context) {
 	args = append(args, lim, offset)
 	rows, err := h.db.Query(context.Background(), `
 		SELECT v.id, v.plate_number, v.vin, v.make, v.model, v.year, v.color,
-		       v.vehicle_type, v.fuel_type, v.status, v.mileage_at_fill,
+		       v.vehicle_type, v.fuel_type, v.status, v.odometer_km AS mileage_at_fill,
 		       v.purchase_date, v.purchase_price, v.current_value,
 		       v.insurance_policy, v.insurance_expiry, v.registration_expiry,
 		       v.technical_visit_expiry, v.department, v.notes, v.image_url,
@@ -251,7 +251,7 @@ func (h *FleetHandler) GetVehicle(c *gin.Context) {
 	)
 	err := h.db.QueryRow(context.Background(), `
 		SELECT v.plate_number, v.vin, v.make, v.model, v.year, v.color,
-		       v.vehicle_type, v.fuel_type, v.status, v.mileage_at_fill,
+		       v.vehicle_type, v.fuel_type, v.status, v.odometer_km AS mileage_at_fill,
 		       v.fuel_tank_capacity, v.seating_capacity,
 		       v.purchase_date, v.purchase_price, v.current_value,
 		       v.insurance_policy, v.insurance_expiry, v.registration_expiry,
@@ -335,7 +335,7 @@ func (h *FleetHandler) CreateVehicle(c *gin.Context) {
 	err := h.db.QueryRow(context.Background(), `
 		INSERT INTO fleet_vehicles (
 			company_id, plate_number, vin, make, model, year, color,
-			vehicle_type, fuel_type, status, mileage_at_fill,
+			vehicle_type, fuel_type, status, odometer_km,
 			fuel_tank_capacity, seating_capacity,
 			purchase_date, purchase_price, current_value,
 			insurance_policy, insurance_expiry, registration_expiry,
@@ -380,7 +380,7 @@ func (h *FleetHandler) UpdateVehicle(c *gin.Context) {
 	_, err := h.db.Exec(context.Background(), `
 		UPDATE fleet_vehicles SET
 			plate_number=$3, vin=$4, make=$5, model=$6, year=$7, color=$8,
-			vehicle_type=$9, fuel_type=$10, status=$11, mileage_at_fill=$12,
+			vehicle_type=$9, fuel_type=$10, status=$11, odometer_km=$12,
 			fuel_tank_capacity=$13, seating_capacity=$14,
 			purchase_date=$15, purchase_price=$16, current_value=$17,
 			insurance_policy=$18, insurance_expiry=$19,
@@ -1068,7 +1068,7 @@ func (h *FleetHandler) ListFleetMaintenance(c *gin.Context) {
 	rows, err := h.db.Query(context.Background(), `
 		SELECT m.id, m.vehicle_id, v.plate_number, v.make, v.model,
 		       m.title, m.description, m.maintenance_type, m.status,
-		       m.scheduled_date, m.completed_date, m.mileage_at_fill,
+		       m.scheduled_date, m.completed_date, m.odometer_km AS mileage_at_fill,
 		       m.next_service_km, m.next_service_date,
 		       m.technician, m.garage_name,
 		       m.labor_cost, m.parts_cost, m.total_cost,
@@ -1159,7 +1159,7 @@ func (h *FleetHandler) CreateFleetMaintenance(c *gin.Context) {
 	err := h.db.QueryRow(context.Background(), `
 		INSERT INTO fleet_maintenance (
 			company_id, vehicle_id, title, description, maintenance_type, status,
-			scheduled_date, completed_date, mileage_at_fill,
+			scheduled_date, completed_date, odometer_km,
 			next_service_km, next_service_date,
 			technician, garage_name,
 			labor_cost, parts_cost, total_cost, work_performed, notes
@@ -1206,7 +1206,7 @@ func (h *FleetHandler) UpdateFleetMaintenance(c *gin.Context) {
 	_, err := h.db.Exec(context.Background(), `
 		UPDATE fleet_maintenance SET
 			title=$3, description=$4, maintenance_type=$5, status=$6,
-			scheduled_date=$7, completed_date=$8, mileage_at_fill=$9,
+			scheduled_date=$7, completed_date=$8, odometer_km=$9,
 			next_service_km=$10, next_service_date=$11,
 			technician=$12, garage_name=$13,
 			labor_cost=$14, parts_cost=$15, total_cost=$16,

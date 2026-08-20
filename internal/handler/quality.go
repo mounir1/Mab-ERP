@@ -1198,7 +1198,7 @@ func (h *QualityHandler) ListNonConformities(c *gin.Context) {
 			nc.target_date,
 			COALESCE(nc.root_cause,''),
 			COALESCE(nc.immediate_action,''),
-			nc.closed_at,
+			nc.closed_date AS closed_at,
 			COALESCE(nc.closure_notes,''),
 			nc.created_at,
 			(SELECT COUNT(*) FROM corrective_actions WHERE nc_id = nc.id) AS ca_count
@@ -1329,7 +1329,7 @@ func (h *QualityHandler) GetNonConformity(c *gin.Context) {
 			COALESCE(nc.assigned_to::text,''), COALESCE(ua.full_name,''),
 			nc.target_date,
 			COALESCE(nc.root_cause,''), COALESCE(nc.immediate_action,''),
-			nc.closed_at, COALESCE(nc.closure_notes,''),
+			nc.closed_date AS closed_at, COALESCE(nc.closure_notes,''),
 			nc.created_at
 		FROM non_conformities nc
 		LEFT JOIN items i       ON i.id  = nc.item_id
@@ -1497,7 +1497,6 @@ func (h *QualityHandler) UpdateNonConformity(c *gin.Context) {
 func (h *QualityHandler) UpdateNCStatus(c *gin.Context) {
 	companyID := middleware.GetCompanyID(c)
 	id := c.Param("id")
-	userID, _ := c.Get("user_id")
 	ctx := context.Background()
 
 	var body map[string]interface{}
@@ -1513,13 +1512,11 @@ func (h *QualityHandler) UpdateNCStatus(c *gin.Context) {
 		_, execErr = h.db.Exec(ctx, `
 			UPDATE non_conformities SET
 				status        = $1::nc_status,
-				closed_by     = $2,
-				closed_at     = NOW(),
-				closure_notes = $3,
+				closed_date   = NOW(),
+				closure_notes = $2,
 				updated_at    = NOW()
-			WHERE id=$4 AND company_id=$5`,
+			WHERE id=$3 AND company_id=$4`,
 			newStatus,
-			fmt.Sprintf("%v", userID),
 			qStr(body, "closure_notes"),
 			id, companyID,
 		)
@@ -1620,10 +1617,10 @@ func (h *QualityHandler) ListCorrectiveActions(c *gin.Context) {
 			COALESCE(ca.implemented_action,''),
 			ca.effectiveness_rating,
 			ca.estimated_cost, ca.actual_cost,
-			ca.closed_at,
+			ca.closed_date AS closed_at,
 			ca.created_at,
 			(ca.due_date < CURRENT_DATE AND ca.status NOT IN ('closed','cancelled','verified')) AS is_overdue,
-			(SELECT COUNT(*) FROM ca_tasks WHERE ca_id = ca.id AND completed = false) AS pending_tasks
+			(SELECT COUNT(*) FROM ca_tasks WHERE ca_id = ca.id AND status NOT IN ('done','completed')) AS pending_tasks
 		FROM corrective_actions ca
 		LEFT JOIN non_conformities nc ON nc.id  = ca.nc_id
 		LEFT JOIN users ur            ON ur.id  = ca.responsible_id
@@ -1743,7 +1740,7 @@ func (h *QualityHandler) GetCorrectiveAction(c *gin.Context) {
 			ca.effectiveness_rating, COALESCE(ca.effectiveness_notes,''),
 			COALESCE(uv.full_name,''),
 			ca.estimated_cost, ca.actual_cost,
-			ca.closed_at, ca.created_at
+			ca.closed_date AS closed_at, ca.created_at
 		FROM corrective_actions ca
 		LEFT JOIN non_conformities nc ON nc.id = ca.nc_id
 		LEFT JOIN users ur            ON ur.id = ca.responsible_id
@@ -1773,7 +1770,7 @@ func (h *QualityHandler) GetCorrectiveAction(c *gin.Context) {
 	// Load tasks
 	type Task struct {
 		ID          string      `json:"id"`
-		Sequence    int         `json:"sequence"`
+		Title       string      `json:"title"`
 		Description string      `json:"description"`
 		AssignedTo  string      `json:"assigned_to"`
 		DueDate     interface{} `json:"due_date"`
@@ -1783,19 +1780,21 @@ func (h *QualityHandler) GetCorrectiveAction(c *gin.Context) {
 	}
 	var tasks []Task
 	taskRows, taskErr := h.db.Query(ctx, `
-		SELECT t.id, t.sequence, t.description,
-		       COALESCE(u.full_name,''), t.due_date, t.completed, t.completed_at,
+		SELECT t.id, t.title, t.description,
+		       COALESCE(u.full_name,''), t.due_date,
+		       (t.status IN ('done','completed')) AS completed,
+		       t.completed_date,
 		       COALESCE(t.notes,'')
 		FROM ca_tasks t
 		LEFT JOIN users u ON u.id = t.assigned_to
 		WHERE t.ca_id = $1
-		ORDER BY t.sequence`, id,
+		ORDER BY t.created_at`, id,
 	)
 	if taskErr == nil {
 		defer taskRows.Close()
 		for taskRows.Next() {
 			var t Task
-			taskRows.Scan(&t.ID, &t.Sequence, &t.Description,
+			taskRows.Scan(&t.ID, &t.Title, &t.Description,
 				&t.AssignedTo, &t.DueDate, &t.Completed, &t.CompletedAt, &t.Notes)
 			tasks = append(tasks, t)
 		}
@@ -1939,19 +1938,18 @@ func (h *QualityHandler) UpdateCAStatus(c *gin.Context) {
 	case "closed":
 		_, execErr = h.db.Exec(ctx, `
 			UPDATE corrective_actions SET
-				status    = 'closed'::ca_status,
-				closed_by = $1,
-				closed_at = NOW(),
+				status     = 'closed'::ca_status,
+				closed_date = NOW(),
 				updated_at = NOW()
-			WHERE id=$2 AND company_id=$3`,
-			fmt.Sprintf("%v", userID), id, companyID,
+			WHERE id=$1 AND company_id=$2`,
+			id, companyID,
 		)
 	case "verified":
 		_, execErr = h.db.Exec(ctx, `
 			UPDATE corrective_actions SET
 				status               = 'verified'::ca_status,
 				verified_by          = $1,
-				verification_date    = CURRENT_DATE,
+				verified_date        = CURRENT_DATE,
 				effectiveness_rating = $2,
 				effectiveness_notes  = $3,
 				updated_at           = NOW()
@@ -2120,7 +2118,7 @@ func (h *QualityHandler) GetReports(c *gin.Context) {
 		SELECT
 			status::text,
 			COUNT(*),
-			COALESCE(ROUND(AVG(EXTRACT(DAY FROM closed_at - created_at)),1),0),
+			COALESCE(ROUND(AVG(EXTRACT(DAY FROM closed_date - created_at)),1),0),
 			COALESCE(ROUND(AVG(effectiveness_rating::NUMERIC),2),0)
 		FROM corrective_actions
 		WHERE company_id=$1

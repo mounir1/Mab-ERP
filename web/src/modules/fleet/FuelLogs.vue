@@ -76,7 +76,8 @@
               <tr v-for="l in filtered" :key="l.id" :class="dk('hover:bg-gray-800/50','hover:bg-gray-50')" class="transition-colors">
                 <td class="px-4 py-3 text-xs">{{ l.fill_date }}</td>
                 <td class="px-4 py-3">
-                  <div class="font-medium text-sm">{{ l.vehicle_plate || l.vehicle_id }}</div>
+                  <div class="font-medium text-sm">{{ l.plate_number }}</div>
+                  <div class="text-xs" :class="dk('text-gray-400','text-gray-500')">{{ l.vehicle_name }}</div>
                 </td>
                 <td class="px-4 py-3 text-xs">{{ l.driver_name || '—' }}</td>
                 <td class="px-4 py-3">
@@ -167,10 +168,6 @@
               <label class="block text-xs font-medium mb-1 text-gray-400">Fuel Station</label>
               <input v-model="form.fuel_station" :class="inputCls" placeholder="Station name or location" />
             </div>
-            <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">Receipt Number</label>
-              <input v-model="form.receipt_number" :class="inputCls" />
-            </div>
             <div class="md:col-span-2">
               <label class="block text-xs font-medium mb-1 text-gray-400">Notes</label>
               <textarea v-model="form.notes" :class="inputCls" rows="2" />
@@ -237,7 +234,7 @@ const deleteItem = ref<any>(null)
 const defaultForm = () => ({
   vehicle_id: '', driver_id: '', fill_date: new Date().toISOString().split('T')[0],
   fuel_type: 'diesel', liters: null, price_per_liter: null, mileage_at_fill: null,
-  is_full_tank: true, fuel_station: '', receipt_number: '', notes: '',
+  is_full_tank: true, fuel_station: '', notes: '',
 })
 const form = ref(defaultForm())
 
@@ -249,7 +246,7 @@ const filtered = computed(() => {
   let list = logs.value
   if (search.value) {
     const q = search.value.toLowerCase()
-    list = list.filter(l => [l.vehicle_plate, l.driver_name, l.fuel_station].some(f => f?.toLowerCase().includes(q)))
+    list = list.filter(l => [l.plate_number, l.vehicle_name, l.driver_name, l.fuel_station].some(f => f?.toLowerCase().includes(q)))
   }
   if (dateFrom.value) list = list.filter(l => l.fill_date >= dateFrom.value)
   if (dateTo.value) list = list.filter(l => l.fill_date <= dateTo.value)
@@ -286,7 +283,7 @@ async function load() {
   loading.value = true
   try {
     const r = await fleetAPI.listFuelLogs()
-    logs.value = r.data.items || r.data || []
+    logs.value = r.data.fuel_logs || []
   } catch { app.addToast('Failed to load fuel logs', 'error') }
   finally { loading.value = false }
 }

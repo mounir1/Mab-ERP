@@ -35,22 +35,23 @@ interface Order {
   request_id?: string
   request_number?: string
   assigned_to?: string
-  technician_name?: string
-  scheduled_date?: string
-  actual_start?: string
-  actual_end?: string
+  assigned_technician?: string
+  planned_start_date?: string
+  planned_end_date?: string
+  actual_start_date?: string
+  actual_end_date?: string
   estimated_hours?: number
   actual_hours?: number
-  estimated_cost?: number
-  actual_cost?: number
   labor_cost?: number
   parts_cost?: number
   other_cost?: number
+  total_cost?: number
   work_performed?: string
   findings?: string
   next_service_date?: string
   color?: string
   lines?: OrderLine[]
+  overdue?: boolean
   created_at: string
 }
 
@@ -90,15 +91,15 @@ const selected     = ref<Order | null>(null)
 const form = ref({
   title: '', description: '', order_type: 'corrective', priority: 'medium',
   equipment_id: '', request_id: '',
-  assigned_to: '', technician_name: '',
-  scheduled_date: '', estimated_hours: '', estimated_cost: '',
-  status: 'pending'
+  assigned_technician: '',
+  planned_start_date: '', planned_end_date: '', estimated_hours: '',
+  status: 'draft'
 })
 
 const completeForm = ref({
   work_performed: '', findings: '',
   actual_hours: '', labor_cost: '', parts_cost: '', other_cost: '',
-  technician_name: '', next_service_date: ''
+  next_service_date: ''
 })
 
 // ─── computed ────────────────────────────────────────────────────────────────
@@ -112,7 +113,7 @@ const filtered = computed(() => {
       o.order_number.toLowerCase().includes(q) ||
       o.title.toLowerCase().includes(q) ||
       (o.equipment_name || '').toLowerCase().includes(q) ||
-      (o.technician_name || '').toLowerCase().includes(q)
+      (o.assigned_technician || '').toLowerCase().includes(q)
     )
   }
   if (statusFilter.value !== 'all') list = list.filter(o => o.status === statusFilter.value)
@@ -130,9 +131,9 @@ const kpis = computed<KPI[]>(() => {
   const all       = orders.value
   const inProg    = all.filter(o => o.status === 'in_progress').length
   const done      = all.filter(o => o.status === 'completed').length
-  const overdue   = all.filter(o => isOverdue(o)).length
-  const pending   = all.filter(o => o.status === 'pending').length
-  const totalCost = all.reduce((s, o) => s + (o.actual_cost || o.estimated_cost || 0), 0)
+  const overdue   = all.filter(o => o.overdue || isOverdue(o)).length
+  const pending   = all.filter(o => o.status === 'draft' || o.status === 'planned').length
+  const totalCost = all.reduce((s, o) => s + (o.total_cost || 0), 0)
   return [
     { label: 'Total Orders',    value: all.length,  sub: 'all time',          icon: Wrench,       color: 'text-violet-500', bg: 'bg-violet-500/10' },
     { label: 'In Progress',     value: inProg,       sub: 'active now',        icon: Clock,        color: 'text-blue-500',   bg: 'bg-blue-500/10' },
@@ -159,8 +160,8 @@ const fmtDate = (s?: string) => {
 
 const isOverdue = (o: Order) => {
   if (['completed','cancelled'].includes(o.status)) return false
-  if (!o.scheduled_date) return false
-  return new Date(o.scheduled_date) < new Date()
+  if (!o.planned_end_date) return false
+  return new Date(o.planned_end_date) < new Date()
 }
 
 const typeLabel = (t: string) => ({
@@ -182,7 +183,8 @@ const typeColor = (t: string) => ({
 }[t] ?? '#64748b')
 
 const statusBadge = (s: string) => ({
-  pending:     'bg-slate-500/15 text-slate-400',
+  draft:      'bg-slate-500/15 text-slate-400',
+  planned:    'bg-sky-500/15 text-sky-400',
   in_progress: 'bg-blue-500/15 text-blue-400',
   on_hold:     'bg-amber-500/15 text-amber-400',
   completed:   'bg-emerald-500/15 text-emerald-400',
@@ -190,7 +192,7 @@ const statusBadge = (s: string) => ({
 }[s] ?? 'bg-slate-500/15 text-slate-400')
 
 const statusLabel = (s: string) => ({
-  pending:'Pending', in_progress:'In Progress',
+  draft:'Draft', planned:'Planned', in_progress:'In Progress',
   on_hold:'On Hold', completed:'Completed', cancelled:'Cancelled'
 }[s] ?? s)
 
@@ -207,9 +209,9 @@ const load = async () => {
   try {
     const params: Record<string, string> = {}
     if (statusFilter.value !== 'all') params.status = statusFilter.value
-    if (typeFilter.value   !== 'all') params.type   = typeFilter.value
+    if (typeFilter.value   !== 'all') params.order_type = typeFilter.value
     const res = await maintenanceAPI.listOrders(params)
-    orders.value = res.data.orders ?? res.data ?? []
+    orders.value = res.data.items ?? res.data ?? []
   } catch {
     app.addToast('Failed to load maintenance orders', 'error')
   } finally {
@@ -220,7 +222,7 @@ const load = async () => {
 const loadEquipment = async () => {
   try {
     const res = await maintenanceAPI.listEquipment({ limit: '500' })
-    equipment.value = (res.data.equipment ?? res.data ?? []).map((e: any) => ({
+    equipment.value = (res.data.items ?? res.data ?? []).map((e: any) => ({
       id: e.id, name: e.name, code: e.code
     }))
   } catch { /* silent */ }
@@ -230,8 +232,8 @@ const loadEquipment = async () => {
 const openCreate = () => {
   form.value = {
     title:'', description:'', order_type:'corrective', priority:'medium',
-    equipment_id:'', request_id:'', assigned_to:'', technician_name:'',
-    scheduled_date:'', estimated_hours:'', estimated_cost:'', status:'pending'
+    equipment_id:'', request_id:'', assigned_technician:'',
+    planned_start_date:'', planned_end_date:'', estimated_hours:'', status:'draft'
   }
   showCreate.value = true
 }
@@ -242,10 +244,10 @@ const openEdit = (o: Order) => {
     title: o.title, description: o.description ?? '',
     order_type: o.order_type, priority: o.priority,
     equipment_id: o.equipment_id ?? '', request_id: o.request_id ?? '',
-    assigned_to: o.assigned_to ?? '', technician_name: o.technician_name ?? '',
-    scheduled_date: o.scheduled_date ? o.scheduled_date.substring(0,10) : '',
+    assigned_technician: o.assigned_technician ?? '',
+    planned_start_date: o.planned_start_date ? o.planned_start_date.substring(0,10) : '',
+    planned_end_date: o.planned_end_date ? o.planned_end_date.substring(0,10) : '',
     estimated_hours: o.estimated_hours?.toString() ?? '',
-    estimated_cost: o.estimated_cost?.toString() ?? '',
     status: o.status
   }
   showEdit.value = true
@@ -266,7 +268,6 @@ const openComplete = (o: Order) => {
     work_performed:'', findings:'',
     actual_hours: o.estimated_hours?.toString() ?? '',
     labor_cost:'', parts_cost:'', other_cost:'',
-    technician_name: o.technician_name ?? '',
     next_service_date:''
   }
   showComplete.value = true
@@ -283,7 +284,6 @@ const saveOrder = async (isEdit: boolean) => {
     const payload = {
       ...form.value,
       estimated_hours: form.value.estimated_hours ? parseFloat(form.value.estimated_hours) : null,
-      estimated_cost:  form.value.estimated_cost  ? parseFloat(form.value.estimated_cost)  : null,
     }
     if (isEdit && selected.value) {
       await maintenanceAPI.updateOrder(selected.value.id, payload)
@@ -413,7 +413,8 @@ onMounted(() => { load(); loadEquipment() })
           :class="['px-3 py-2 rounded-lg border text-sm',
             dk('bg-slate-800 border-slate-700 text-slate-100','bg-slate-50 border-slate-200 text-slate-900')]">
           <option value="all">All Statuses</option>
-          <option value="pending">Pending</option>
+          <option value="draft">Draft</option>
+          <option value="planned">Planned</option>
           <option value="in_progress">In Progress</option>
           <option value="on_hold">On Hold</option>
           <option value="completed">Completed</option>
@@ -492,21 +493,18 @@ onMounted(() => { load(); loadEquipment() })
                 </span>
               </td>
               <td class="px-4 py-3">
-                <div :class="['text-sm', isOverdue(o) && 'text-rose-400']">{{ fmtDate(o.scheduled_date) }}</div>
+                <div :class="['text-sm', isOverdue(o) && 'text-rose-400']">{{ fmtDate(o.planned_start_date) }}</div>
               </td>
               <td class="px-4 py-3">
-                <div v-if="o.technician_name" class="flex items-center gap-1.5 text-sm">
+                <div v-if="o.assigned_technician" class="flex items-center gap-1.5 text-sm">
                   <User class="w-3.5 h-3.5 text-slate-400" />
-                  {{ o.technician_name }}
+                  {{ o.assigned_technician }}
                 </div>
                 <div v-else :class="['text-xs', dk('text-slate-600','text-slate-400')]">—</div>
               </td>
               <td class="px-4 py-3">
                 <div class="text-sm font-medium">
-                  {{ o.actual_cost ? fmt(o.actual_cost) : o.estimated_cost ? fmt(o.estimated_cost) : '—' }}
-                </div>
-                <div v-if="o.actual_cost && o.estimated_cost" :class="['text-xs', dk('text-slate-500','text-slate-400')]">
-                  est. {{ fmt(o.estimated_cost) }}
+                  {{ o.total_cost ? fmt(o.total_cost) : '—' }}
                 </div>
               </td>
               <td class="px-4 py-3">
@@ -629,32 +627,31 @@ onMounted(() => { load(); loadEquipment() })
               <!-- Technician -->
               <div>
                 <label :class="['block text-xs font-medium mb-1.5', dk('text-slate-400','text-slate-600')]">Technician Name</label>
-                <input v-model="form.technician_name" placeholder="Full name"
+                <input v-model="form.assigned_technician" placeholder="Full name"
                   :class="['w-full px-3 py-2 rounded-lg border text-sm',
                     dk('bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500',
                        'bg-white border-slate-200 text-slate-900 placeholder-slate-400')]" />
               </div>
-              <!-- Scheduled Date -->
+              <!-- Planned Start Date -->
               <div>
-                <label :class="['block text-xs font-medium mb-1.5', dk('text-slate-400','text-slate-600')]">Scheduled Date</label>
-                <input v-model="form.scheduled_date" type="date"
+                <label :class="['block text-xs font-medium mb-1.5', dk('text-slate-400','text-slate-600')]">Planned Start Date</label>
+                <input v-model="form.planned_start_date" type="date"
                   :class="['w-full px-3 py-2 rounded-lg border text-sm',
                     dk('bg-slate-800 border-slate-700 text-slate-100','bg-white border-slate-200 text-slate-900')]" />
               </div>
             </div>
             <div class="grid grid-cols-2 gap-4">
+              <!-- Planned End Date -->
+              <div>
+                <label :class="['block text-xs font-medium mb-1.5', dk('text-slate-400','text-slate-600')]">Planned End Date</label>
+                <input v-model="form.planned_end_date" type="date"
+                  :class="['w-full px-3 py-2 rounded-lg border text-sm',
+                    dk('bg-slate-800 border-slate-700 text-slate-100','bg-white border-slate-200 text-slate-900')]" />
+              </div>
               <!-- Estimated Hours -->
               <div>
                 <label :class="['block text-xs font-medium mb-1.5', dk('text-slate-400','text-slate-600')]">Estimated Hours</label>
                 <input v-model="form.estimated_hours" type="number" step="0.5" min="0" placeholder="0"
-                  :class="['w-full px-3 py-2 rounded-lg border text-sm',
-                    dk('bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500',
-                       'bg-white border-slate-200 text-slate-900 placeholder-slate-400')]" />
-              </div>
-              <!-- Estimated Cost -->
-              <div>
-                <label :class="['block text-xs font-medium mb-1.5', dk('text-slate-400','text-slate-600')]">Estimated Cost (DZD)</label>
-                <input v-model="form.estimated_cost" type="number" min="0" placeholder="0"
                   :class="['w-full px-3 py-2 rounded-lg border text-sm',
                     dk('bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500',
                        'bg-white border-slate-200 text-slate-900 placeholder-slate-400')]" />
@@ -666,7 +663,8 @@ onMounted(() => { load(); loadEquipment() })
               <select v-model="form.status"
                 :class="['w-full px-3 py-2 rounded-lg border text-sm',
                   dk('bg-slate-800 border-slate-700 text-slate-100','bg-white border-slate-200 text-slate-900')]">
-                <option value="pending">Pending</option>
+                <option value="draft">Draft</option>
+                <option value="planned">Planned</option>
                 <option value="in_progress">In Progress</option>
                 <option value="on_hold">On Hold</option>
                 <option value="cancelled">Cancelled</option>
@@ -744,13 +742,12 @@ onMounted(() => { load(); loadEquipment() })
                   :class="['w-full px-3 py-2 rounded-lg border text-sm',
                     dk('bg-slate-800 border-slate-700 text-slate-100','bg-white border-slate-200 text-slate-900')]" />
               </div>
-              <!-- Technician -->
+              <!-- Next Service Date -->
               <div>
-                <label :class="['block text-xs font-medium mb-1.5', dk('text-slate-400','text-slate-600')]">Technician Name</label>
-                <input v-model="completeForm.technician_name" placeholder="Full name"
+                <label :class="['block text-xs font-medium mb-1.5', dk('text-slate-400','text-slate-600')]">Next Service Date</label>
+                <input v-model="completeForm.next_service_date" type="date"
                   :class="['w-full px-3 py-2 rounded-lg border text-sm',
-                    dk('bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500',
-                       'bg-white border-slate-200 text-slate-900 placeholder-slate-400')]" />
+                    dk('bg-slate-800 border-slate-700 text-slate-100','bg-white border-slate-200 text-slate-900')]" />
               </div>
             </div>
             <!-- Cost Breakdown -->
@@ -789,13 +786,6 @@ onMounted(() => { load(); loadEquipment() })
                   (parseFloat(completeForm.other_cost||'0')||0)
                 ) }}
               </div>
-            </div>
-            <!-- Next Service Date -->
-            <div>
-              <label :class="['block text-xs font-medium mb-1.5', dk('text-slate-400','text-slate-600')]">Next Service Date</label>
-              <input v-model="completeForm.next_service_date" type="date"
-                :class="['w-full px-3 py-2 rounded-lg border text-sm',
-                  dk('bg-slate-800 border-slate-700 text-slate-100','bg-white border-slate-200 text-slate-900')]" />
             </div>
           </div>
           <div :class="['flex items-center justify-end gap-3 px-6 py-4 border-t', dk('border-slate-800','border-slate-200')]">
@@ -854,17 +844,17 @@ onMounted(() => { load(); loadEquipment() })
                 <span :class="['text-xs', dk('text-slate-400','text-slate-500')]">Equipment</span>
                 <p class="font-medium mt-0.5">{{ selected.equipment_name }}</p>
               </div>
-              <div v-if="selected.technician_name">
+              <div v-if="selected.assigned_technician">
                 <span :class="['text-xs', dk('text-slate-400','text-slate-500')]">Technician</span>
-                <p class="font-medium mt-0.5">{{ selected.technician_name }}</p>
+                <p class="font-medium mt-0.5">{{ selected.assigned_technician }}</p>
               </div>
               <div>
                 <span :class="['text-xs', dk('text-slate-400','text-slate-500')]">Scheduled</span>
-                <p class="font-medium mt-0.5">{{ fmtDate(selected.scheduled_date) }}</p>
+                <p class="font-medium mt-0.5">{{ fmtDate(selected.planned_start_date) }}</p>
               </div>
-              <div v-if="selected.actual_end">
+              <div v-if="selected.actual_end_date">
                 <span :class="['text-xs', dk('text-slate-400','text-slate-500')]">Completed</span>
-                <p class="font-medium mt-0.5">{{ fmtDate(selected.actual_end) }}</p>
+                <p class="font-medium mt-0.5">{{ fmtDate(selected.actual_end_date) }}</p>
               </div>
               <div>
                 <span :class="['text-xs', dk('text-slate-400','text-slate-500')]">Est. Hours</span>
@@ -896,7 +886,7 @@ onMounted(() => { load(); loadEquipment() })
                 <div>
                   <span :class="['text-xs', dk('text-slate-400','text-slate-500')]">Total</span>
                   <p class="font-semibold mt-0.5 text-xs text-emerald-400">
-                    {{ selected.actual_cost ? fmt(selected.actual_cost) : selected.estimated_cost ? fmt(selected.estimated_cost) : '—' }}
+                    {{ selected.total_cost ? fmt(selected.total_cost) : '—' }}
                   </p>
                 </div>
               </div>

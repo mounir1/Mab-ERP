@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -23,6 +24,13 @@ func NewPool(dsn string) (*pgxpool.Pool, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid database URL: %w", err)
 	}
+
+	// Simple protocol returns types in text format. This is required so the
+	// handlers can scan DATE columns into *string (binary format rejects it
+	// with "cannot scan date in binary format into *string"), which silently
+	// dropped every row in list endpoints. All handler query args are scalars,
+	// so simple protocol interpolation is safe here.
+	config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 
 	config.MaxConns = 25
 	config.MinConns = 5

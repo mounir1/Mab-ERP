@@ -136,20 +136,20 @@
           </h3>
           <div class="space-y-3">
             <div :class="dk('bg-gray-800/50','bg-gray-50')+ ' rounded-lg p-3 flex items-center justify-between'">
-              <span :class="dk('text-gray-400','text-gray-500')" class="text-sm">Total Liters Consumed</span>
-              <span class="font-bold text-yellow-400">{{ report.total_fuel_liters?.toFixed(0) || 0 }} L</span>
+              <span :class="dk('text-gray-400','text-gray-500')" class="text-sm">Month Fuel Cost</span>
+              <span class="font-bold text-yellow-400">{{ fmtDZD(report.month_fuel_cost || 0) }}</span>
             </div>
             <div :class="dk('bg-gray-800/50','bg-gray-50')+ ' rounded-lg p-3 flex items-center justify-between'">
-              <span :class="dk('text-gray-400','text-gray-500')" class="text-sm">Total Fuel Cost</span>
-              <span class="font-bold text-yellow-400">{{ fmtDZD(report.total_fuel_cost || 0) }}</span>
+              <span :class="dk('text-gray-400','text-gray-500')" class="text-sm">Month Fuel Liters</span>
+              <span class="font-bold text-yellow-400">{{ report.month_fuel_liters?.toFixed(0) || 0 }} L</span>
             </div>
             <div :class="dk('bg-gray-800/50','bg-gray-50')+ ' rounded-lg p-3 flex items-center justify-between'">
               <span :class="dk('text-gray-400','text-gray-500')" class="text-sm">Avg Price per Liter</span>
-              <span class="font-bold">{{ report.avg_fuel_price?.toFixed(2) || '—' }} DZD</span>
+              <span class="font-bold">{{ avgFuelPrice.toFixed(2) }} DZD</span>
             </div>
             <div :class="dk('bg-gray-800/50','bg-gray-50')+ ' rounded-lg p-3 flex items-center justify-between'">
               <span :class="dk('text-gray-400','text-gray-500')" class="text-sm">Total Fill Records</span>
-              <span class="font-bold">{{ report.total_fuel_records || 0 }}</span>
+              <span class="font-bold">{{ fuelLogs.length }}</span>
             </div>
           </div>
         </div>
@@ -199,6 +199,9 @@ const vehicleStatusData = computed(() => [
 
 const totalExpenses = computed(() => expenses.value.reduce((s, e) => s + (e.amount || 0), 0))
 
+const avgFuelPrice = computed(() => fuelLogs.value.length > 0
+  ? fuelLogs.value.reduce((s, l) => s + (l.price_per_liter || 0), 0) / fuelLogs.value.length : 0)
+
 const expenseBreakdown = computed(() => {
   const m: Record<string, number> = {}
   for (const e of expenses.value) { m[e.expense_type] = (m[e.expense_type] || 0) + (e.amount || 0) }
@@ -225,11 +228,11 @@ const maxMonthly = computed(() => Math.max(1, ...monthlyData.value.map((m: any) 
 const topVehicles = computed(() => {
   const m: Record<string, { vehicle_plate: string; vehicle_id: string; total_cost: number }> = {}
   for (const e of expenses.value) {
-    if (!m[e.vehicle_id]) m[e.vehicle_id] = { vehicle_plate: e.vehicle_plate || e.vehicle_id, vehicle_id: e.vehicle_id, total_cost: 0 }
+    if (!m[e.vehicle_id]) m[e.vehicle_id] = { vehicle_plate: e.plate_number || e.vehicle_id, vehicle_id: e.vehicle_id, total_cost: 0 }
     m[e.vehicle_id].total_cost += e.amount || 0
   }
   for (const f of fuelLogs.value) {
-    if (!m[f.vehicle_id]) m[f.vehicle_id] = { vehicle_plate: f.vehicle_plate || f.vehicle_id, vehicle_id: f.vehicle_id, total_cost: 0 }
+    if (!m[f.vehicle_id]) m[f.vehicle_id] = { vehicle_plate: f.plate_number || f.vehicle_id, vehicle_id: f.vehicle_id, total_cost: 0 }
     m[f.vehicle_id].total_cost += f.total_cost || 0
   }
   return Object.values(m).sort((a, b) => b.total_cost - a.total_cost).slice(0, 8)
@@ -238,7 +241,7 @@ const topVehicles = computed(() => {
 const driverStatusData = computed(() => {
   const m: Record<string, number> = {}
   for (const d of drivers.value) { m[d.status] = (m[d.status] || 0) + 1 }
-  const dots: Record<string, string> = { available: 'bg-green-400', on_duty: 'bg-blue-400', off_duty: 'bg-gray-400', on_leave: 'bg-amber-400', terminated: 'bg-red-400' }
+  const dots: Record<string, string> = { active: 'bg-green-400', inactive: 'bg-gray-400', on_leave: 'bg-amber-400', suspended: 'bg-orange-400', terminated: 'bg-red-400' }
   return Object.entries(m).map(([status, count]) => ({ status, count, dot: dots[status] || 'bg-gray-400' }))
 })
 
@@ -258,11 +261,11 @@ async function load() {
       fleetAPI.listAssignments(),
     ])
     if (rDash.status === 'fulfilled') report.value = rDash.value.data || {}
-    if (rVeh.status === 'fulfilled') vehicles.value = rVeh.value.data.items || rVeh.value.data || []
-    if (rDrv.status === 'fulfilled') drivers.value = rDrv.value.data.items || rDrv.value.data || []
-    if (rExp.status === 'fulfilled') expenses.value = rExp.value.data.items || rExp.value.data || []
-    if (rFuel.status === 'fulfilled') fuelLogs.value = rFuel.value.data.items || rFuel.value.data || []
-    if (rAsgn.status === 'fulfilled') assignments.value = rAsgn.value.data.items || rAsgn.value.data || []
+    if (rVeh.status === 'fulfilled') vehicles.value = rVeh.value.data.vehicles || rVeh.value.data || []
+    if (rDrv.status === 'fulfilled') drivers.value = rDrv.value.data.drivers || rDrv.value.data || []
+    if (rExp.status === 'fulfilled') expenses.value = rExp.value.data.expenses || rExp.value.data || []
+    if (rFuel.status === 'fulfilled') fuelLogs.value = rFuel.value.data.fuel_logs || rFuel.value.data || []
+    if (rAsgn.status === 'fulfilled') assignments.value = rAsgn.value.data.assignments || rAsgn.value.data || []
   } catch { app.addToast('Failed to load fleet reports', 'error') }
   finally { loading.value = false }
 }

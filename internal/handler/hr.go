@@ -1293,9 +1293,11 @@ func (h *HRHandler) PayPayrollRun(c *gin.Context) {
 }
 
 func (h *HRHandler) GetPayslips(c *gin.Context) {
+	ctx := context.Background()
+	companyID := middleware.GetCompanyID(c)
 	runID := c.Param("id")
 	employeeID := c.Query("employee_id")
-	ctx := context.Background()
+
 	query := `
 		SELECT
 			ps.id,
@@ -1313,31 +1315,17 @@ func (h *HRHandler) GetPayslips(c *gin.Context) {
 		FROM payslips ps
 		JOIN employees   e ON e.id = ps.employee_id
 		LEFT JOIN departments d ON d.id = e.department_id
-		WHERE ps.payroll_run_id = $1
-		ORDER BY e.last_name, e.first_name`
-	args := []interface{}{runID}
-	if employeeID != "" {
-		query = `
-		SELECT
-			ps.id,
-			e.employee_number,
-			e.first_name||' '||e.last_name AS employee_name,
-			COALESCE(d.name,'') AS department_name,
-			ps.days_worked, ps.overtime_hours,
-			ps.base_salary, ps.transport_allowance, ps.meal_allowance,
-			ps.housing_allowance, ps.other_allowances,
-			ps.gross_salary,
-			ps.cnas_employee, ps.cnas_employer,
-			ps.taxable_income, ps.irg_amount,
-			ps.other_deductions, ps.advance_deduction,
-			ps.net_salary
-		FROM payslips ps
-		JOIN employees   e ON e.id = ps.employee_id
-		LEFT JOIN departments d ON d.id = e.department_id
-		WHERE ps.employee_id = $1
-		ORDER BY ps.payroll_run_id DESC, e.last_name, e.first_name`
-		args = []interface{}{employeeID}
+		JOIN payroll_runs pr ON pr.id = ps.payroll_run_id
+		WHERE pr.company_id = $1`
+	args := []interface{}{companyID}
+	if runID != "" {
+		query += ` AND ps.payroll_run_id = $2`
+		args = append(args, runID)
+	} else if employeeID != "" {
+		query += ` AND ps.employee_id = $2`
+		args = append(args, employeeID)
 	}
+	query += ` ORDER BY ps.payroll_run_id DESC, e.last_name, e.first_name`
 	rows, err := h.db.Query(ctx, query, args...)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

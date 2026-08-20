@@ -87,7 +87,7 @@
                 class="transition-colors">
                 <td class="px-4 py-3">
                   <div class="font-medium">{{ v.make }} {{ v.model }}</div>
-                  <div :class="dk('text-gray-400','text-gray-500')" class="text-xs">{{ v.code }}</div>
+                  <div :class="dk('text-gray-400','text-gray-500')" class="text-xs">{{ v.department }}</div>
                 </td>
                 <td class="px-4 py-3 font-mono text-sm">{{ v.plate_number }}</td>
                 <td class="px-4 py-3">
@@ -98,7 +98,7 @@
                 </td>
                 <td class="px-4 py-3 text-xs">{{ formatEnum(v.fuel_type) }}</td>
                 <td class="px-4 py-3">{{ v.year || '—' }}</td>
-                <td class="px-4 py-3">{{ v.mileage != null ? v.mileage.toLocaleString() + ' km' : '—' }}</td>
+                <td class="px-4 py-3">{{ v.mileage_at_fill != null ? v.mileage_at_fill.toLocaleString() + ' km' : '—' }}</td>
                 <td class="px-4 py-3">
                   <span v-if="v.insurance_expiry" :class="expiryClass(v.insurance_expiry)" class="text-xs">{{ v.insurance_expiry }}</span>
                   <span v-else class="text-gray-400 text-xs">—</span>
@@ -139,10 +139,6 @@
             </button>
           </div>
           <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">Code</label>
-              <input v-model="form.code" :class="inputCls" placeholder="VEH-0001 (auto)" />
-            </div>
             <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">Plate Number <span class="text-red-400">*</span></label>
               <input v-model="form.plate_number" :class="inputCls" placeholder="123 TUN 16" required />
@@ -193,19 +189,27 @@
             </div>
             <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">Mileage (km)</label>
-              <input v-model.number="form.mileage" type="number" :class="inputCls" placeholder="0" />
+              <input v-model.number="form.mileage_at_fill" type="number" :class="inputCls" placeholder="0" />
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">Fuel Capacity (L)</label>
-              <input v-model.number="form.fuel_capacity_liters" type="number" :class="inputCls" placeholder="60" />
+              <label class="block text-xs font-medium mb-1 text-gray-400">Fuel Tank Capacity (L)</label>
+              <input v-model.number="form.fuel_tank_capacity" type="number" :class="inputCls" placeholder="60" />
             </div>
             <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">Purchase Date</label>
               <input v-model="form.purchase_date" type="date" :class="inputCls" />
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">Purchase Cost (DZD)</label>
-              <input v-model.number="form.purchase_cost" type="number" :class="inputCls" placeholder="0" />
+              <label class="block text-xs font-medium mb-1 text-gray-400">Purchase Price (DZD)</label>
+              <input v-model.number="form.purchase_price" type="number" :class="inputCls" placeholder="0" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1 text-gray-400">Current Value (DZD)</label>
+              <input v-model.number="form.current_value" type="number" :class="inputCls" placeholder="0" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1 text-gray-400">Insurance Policy</label>
+              <input v-model="form.insurance_policy" :class="inputCls" placeholder="POL-2025-001" />
             </div>
             <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">Insurance Expiry</label>
@@ -216,8 +220,8 @@
               <input v-model="form.registration_expiry" type="date" :class="inputCls" />
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1 text-gray-400">Next Inspection</label>
-              <input v-model="form.next_inspection_date" type="date" :class="inputCls" />
+              <label class="block text-xs font-medium mb-1 text-gray-400">Technical Visit Expiry</label>
+              <input v-model="form.technical_visit_expiry" type="date" :class="inputCls" />
             </div>
             <div>
               <label class="block text-xs font-medium mb-1 text-gray-400">Department</label>
@@ -326,10 +330,10 @@ const statusFilters = [
 ]
 
 const defaultForm = () => ({
-  code: '', plate_number: '', make: '', model: '', year: null, vin: '', color: '',
-  vehicle_type: 'car', fuel_type: 'diesel', status: 'active', mileage: 0,
-  fuel_capacity_liters: null, purchase_date: '', purchase_cost: null,
-  insurance_expiry: '', registration_expiry: '', next_inspection_date: '',
+  plate_number: '', vin: '', make: '', model: '', year: null, color: '',
+  vehicle_type: 'car', fuel_type: 'diesel', status: 'active', mileage_at_fill: 0,
+  fuel_tank_capacity: null, purchase_date: '', purchase_price: null, current_value: null,
+  insurance_policy: '', insurance_expiry: '', registration_expiry: '', technical_visit_expiry: '',
   department: '', notes: '',
 })
 const form = ref(defaultForm())
@@ -344,7 +348,7 @@ const filtered = computed(() => {
   if (statusFilter.value !== 'all') list = list.filter(v => v.status === statusFilter.value)
   if (search.value) {
     const q = search.value.toLowerCase()
-    list = list.filter(v => [v.plate_number, v.make, v.model, v.code].some(f => f?.toLowerCase().includes(q)))
+    list = list.filter(v => [v.plate_number, v.make, v.model, v.department].some(f => f?.toLowerCase().includes(q)))
   }
   return list
 })
@@ -369,7 +373,6 @@ const viewFields = computed(() => {
   if (!viewItem.value) return []
   const v = viewItem.value
   return [
-    { label: 'Code', value: v.code },
     { label: 'Plate Number', value: v.plate_number },
     { label: 'Make / Model', value: `${v.make} ${v.model}` },
     { label: 'Year', value: v.year },
@@ -378,14 +381,17 @@ const viewFields = computed(() => {
     { label: 'Type', value: formatEnum(v.vehicle_type) },
     { label: 'Fuel Type', value: formatEnum(v.fuel_type) },
     { label: 'Status', value: formatEnum(v.status) },
-    { label: 'Mileage', value: v.mileage != null ? v.mileage.toLocaleString() + ' km' : null },
-    { label: 'Fuel Capacity', value: v.fuel_capacity_liters ? v.fuel_capacity_liters + ' L' : null },
+    { label: 'Mileage', value: v.mileage_at_fill != null ? v.mileage_at_fill.toLocaleString() + ' km' : null },
+    { label: 'Fuel Tank Capacity', value: v.fuel_tank_capacity ? v.fuel_tank_capacity + ' L' : null },
     { label: 'Purchase Date', value: v.purchase_date },
-    { label: 'Purchase Cost', value: v.purchase_cost != null ? fmtDZD(v.purchase_cost) : null },
+    { label: 'Purchase Price', value: v.purchase_price != null ? fmtDZD(Number(v.purchase_price)) : null },
+    { label: 'Current Value', value: v.current_value != null ? fmtDZD(Number(v.current_value)) : null },
+    { label: 'Insurance Policy', value: v.insurance_policy },
     { label: 'Insurance Expiry', value: v.insurance_expiry },
     { label: 'Registration Expiry', value: v.registration_expiry },
-    { label: 'Next Inspection', value: v.next_inspection_date },
+    { label: 'Technical Visit Expiry', value: v.technical_visit_expiry },
     { label: 'Department', value: v.department },
+    { label: 'Assigned Driver', value: v.driver_name },
     { label: 'Notes', value: v.notes },
   ]
 })
@@ -439,7 +445,7 @@ async function load() {
   loading.value = true
   try {
     const r = await fleetAPI.listVehicles()
-    vehicles.value = r.data.items || r.data || []
+    vehicles.value = r.data.vehicles || []
   } catch { app.addToast('Failed to load vehicles', 'error') }
   finally { loading.value = false }
 }
